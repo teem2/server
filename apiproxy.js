@@ -16,6 +16,7 @@ module.exports = function (pattern, target, host, port) {
       // rewrite query parameters with ROVI signature
       req.query.sig = roviSig(process.env.ROVI_SEARCH_KEY, process.env.ROVI_SEARCH_SECRET);
       req.query.apikey = process.env.ROVI_SEARCH_KEY;
+      req.query.format = 'json'
       req.url = newpath + '?' + querystring.stringify(req.query);
 
       console.log('proxying', url, req.url);
