@@ -1,0 +1,13 @@
+{
+  "name": "teemserver",
+  "version": "0.0.1",
+  "description": "Serves static content, proxies API calls",
+  "node-main": "server.js",
+  "dependencies": {
+	"express": "4.1.1",
+	"http-proxy": "1.1.2",
+	"rovi": "0.0.1",
+	"querystring": "0.2.0"
+  },
+  "engine": "node >= 0.10.0"
+}
