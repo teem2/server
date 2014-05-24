@@ -4,13 +4,14 @@
   "description": "Serves static content, proxies API calls",
   "node-main": "server.js",
   "dependencies": {
-   "express": "4.1.1",
-   "http-proxy": "1.1.2",
-   "rovi": "0.0.1",
-   "querystring": "0.2.0",
-   "express-cache-control": "~1.0.2",
-   "async": "0.8.0",
-   "socket.io": "0.9.16"
+    "express": "4.1.1",
+    "http-proxy": "1.1.2",
+    "rovi": "0.0.1",
+    "querystring": "0.2.0",
+    "express-cache-control": "~1.0.2",
+    "async": "0.8.0",
+    "socket.io": "0.9.16",
+    "compression": "~1.0.2"
   },
   "engine": "node >= 0.10.0"
 }

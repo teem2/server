@@ -1,20 +1,18 @@
 var http = require('http');
 var express = require('express');
 var async = require('async');
-
-// var compress = require('compression')
+var socketio = require('socket.io');
+var compress = require('compression')
 
 var app = express();
 var server = http.createServer(app);
-var socketio = require('socket.io');
-var io = socketio.listen(server);
 
-// app.use(compress());
+app.use(compress());
 var apiProxy = require('./apiproxy.js')
 app.use(apiProxy(new RegExp('^\/api\/')));
 
 var staticroot = __dirname + '/' + process.env.DREEM_ROOT
-console.log('DREEM_ROOT', staticroot)
+console.log('serving static root from', staticroot)
 app.use(express.static(staticroot));
 
 app.use(function (req, res, next) {
@@ -25,6 +23,7 @@ app.use(function (req, res, next) {
 });
 
 // chat server
+var io = socketio.listen(server);
 var state = ''
 var sockets = [];
 
