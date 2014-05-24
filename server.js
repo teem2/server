@@ -1,7 +1,7 @@
 var http = require('http');
 var express = require('express');
 var async = require('async');
-var socketio = require('socket.io');
+var Primus = require('primus.io')
 var compress = require('compression')
 
 var app = express();
@@ -22,62 +22,19 @@ app.use(function (req, res, next) {
     next();
 });
 
-// chat server
-var io = socketio.listen(server);
-var state = ''
-var sockets = [];
+var primus = new Primus(server, { transformer: 'SockJS', parser: 'JSON'});
+var state;
+primus.on('connection', function (spark) {
+	if (state) {
+		primus.send('message', state)
+	}
 
-io.on('connection', function (socket) {
-    if (state) socket.emit('message', state);
-
-    sockets.push(socket);
-
-    socket.on('disconnect', function () {
-      sockets.splice(sockets.indexOf(socket), 1);
-      updateRoster();
-    });
-
-    socket.on('message', function (msg) {
-      var text = String(msg || '');
-
-      if (!text)
-        return;
-
-      socket.get('name', function (err, name) {
-        var data = {
-          name: name,
-          text: text
-        };
-
-        broadcast('message', data);
-        state = data;
-      });
-    });
-
-    socket.on('identify', function (name) {
-      socket.set('name', String(name || 'Anonymous'), function (err) {
-        updateRoster();
-      });
-    });
-  });
-
-function updateRoster() {
-  async.map(
-    sockets,
-    function (socket, callback) {
-      socket.get('name', callback);
-    },
-    function (err, names) {
-      broadcast('roster', names);
-    }
-  );
-}
-
-function broadcast(event, data) {
-  sockets.forEach(function (socket) {
-    socket.emit(event, data);
-  });
-}
+	spark.on('message', function (msg) {
+		state = msg;
+		// console.log('message', msg);
+		primus.send('message', state);
+	});
+})
 
 server.listen(process.env.PORT || 8080, process.env.IP || "0.0.0.0", function(){
   var addr = server.address();
