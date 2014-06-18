@@ -8,6 +8,7 @@ var app = express();
 var server = http.createServer(app);
 
 app.use(compress());
+
 var apiProxy = require('./apiproxy.js')
 app.use(apiProxy(new RegExp('^\/api\/')));
 
@@ -22,7 +23,7 @@ app.use(function (req, res, next) {
     next();
 });
 
-var primus = new Primus(server, { transformer: 'SockJS', parser: 'JSON'});
+var primus = new Primus(server, { transformer: 'SockJS'});
 var state;
 primus.on('connection', function (spark) {
 	if (state) {
@@ -31,10 +32,17 @@ primus.on('connection', function (spark) {
 
 	spark.on('message', function (msg) {
 		state = msg;
-		// console.log('message', msg);
+		// console.log('message', state);
 		primus.send('message', state);
 	});
 })
+
+var vfs = require('vfs-local')({
+  root: staticroot,
+  httpRoot: root,
+});
+
+app.use(require('vfs-http-adapter')("/fs/", vfs));
 
 server.listen(process.env.PORT || 8080, process.env.IP || "0.0.0.0", function(){
   var addr = server.address();
