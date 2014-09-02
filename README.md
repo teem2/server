@@ -5,6 +5,7 @@
 [Node.js v0.10.x](http://nodejs.org/download/)
 
 Also, run
+
     npm install
 
 ### Starting the server
@@ -24,5 +25,10 @@ To use Rovi APIs, prepend /api/ to the URL, e.g.
 [Pivot to other film](http://wafer.local:8080/api/search/v2.1/amgvideo/search?entitytype=video&include=cast&query=Hard+Romanticker)
 
 See the [Rovi docs](http://prod-doc.rovicorp.com/mashery/index.php/Rovi-Data) for more info.
+
+### Troubleshooting
+On OSX, if you see issues running 'npm install' that say something like 'Failed at the pty.js@0.2.3 install script' try running this on the command line:
+
+    xcode-select --install
 
 
