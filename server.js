@@ -37,12 +37,12 @@ primus.on('connection', function (spark) {
 	});
 })
 
-var vfs = require('vfs-local')({
-  root: staticroot,
-  httpRoot: root,
-});
+// var vfs = require('vfs-local')({
+//   root: staticroot,
+//   httpRoot: root,
+// });
 
-app.use(require('vfs-http-adapter')("/fs/", vfs));
+// app.use(require('vfs-http-adapter')("/fs/", vfs));
 
 server.listen(process.env.PORT || 8080, process.env.IP || "0.0.0.0", function(){
   var addr = server.address();
