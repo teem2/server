@@ -32,7 +32,9 @@ primus.on('connection', function (spark) {
 
 	spark.on('message', function (msg) {
 		state = msg;
-		// console.log('message', state);
+		if (process.env.DEBUG) {
+			console.log('message', state);
+		}
 		primus.send('message', state);
 	});
 })

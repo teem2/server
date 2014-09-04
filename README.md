@@ -10,9 +10,13 @@ Also, run
 
 ### Starting the server
 
-DREEM_ROOT specifies the root to your local dreem installation
+DREEM_ROOT specifies the root to your local dreem installation:
 
     ROVI_SEARCH_SECRET=XXX ROVI_SEARCH_KEY=XXX DREEM_ROOT=../dreem/ node server.js
+
+The optional DEBUG flag shows even bus information in the shell:
+
+    ROVI_SEARCH_SECRET=XXX ROVI_SEARCH_KEY=XXX DEBUG=true DREEM_ROOT=../dreem/ node server.js
 
 ### Running demos
 Once your server is running, the directory specified by DREEM_ROOT is served from the root URL, e.g. [http://localhost:8080/](http://localhost:8080/)
