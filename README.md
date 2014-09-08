@@ -4,9 +4,11 @@
 
 [Node.js v0.10.x](http://nodejs.org/download/)
 
-Also, run
+Be sure to run:
 
     npm install
+
+If your machine doesn't have 'xmllint' available on the command-line, you'll need to install it, e.g. [xmllint for windows](https://code.google.com/p/xmllint/)
 
 ### Starting the server
 
@@ -14,7 +16,7 @@ DREEM_ROOT specifies the root to your local dreem installation:
 
     ROVI_SEARCH_SECRET=XXX ROVI_SEARCH_KEY=XXX DREEM_ROOT=../dreem/ node server.js
 
-The optional DEBUG flag shows even bus information in the shell:
+The optional DEBUG flag shows event bus information in the shell:
 
     ROVI_SEARCH_SECRET=XXX ROVI_SEARCH_KEY=XXX DEBUG=true DREEM_ROOT=../dreem/ node server.js
 
@@ -34,5 +36,3 @@ See the [Rovi docs](http://prod-doc.rovicorp.com/mashery/index.php/Rovi-Data) fo
 On OSX, if you see issues running 'npm install' that say something like 'Failed at the pty.js@0.2.3 install script' try running this on the command line:
 
     xcode-select --install
-
-
