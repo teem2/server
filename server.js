@@ -40,7 +40,10 @@ var findErrors = function (parsererror) {
 app.get(/^\/(validate).+/, function (req, res, next) {
   tmp.file(function _tempFileCreated(err, path, fd, cleanupCallback) {
     if (err) throw err;
-    exec("xmllint " + staticroot + req.query.url.substring(1), function(error, stdout, stderr) { 
+    var path = staticroot + req.query.url.substring(1);
+    if (path.lastIndexOf('/') === path.length - 1)
+      path += 'index.html'
+    exec("xmllint " + path, function(error, stdout, stderr) { 
       var array = stderr.toString().split("\n");
       var out = [];
       for (var i = 0; i < array.length; i += 3) {
