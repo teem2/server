@@ -37,12 +37,8 @@ var findErrors = function (parsererror) {
   })
   return skip
 }
-app.get(/^\/(validate).+/, function (req, res, next) {
-  tmp.file(function _tempFileCreated(err, path, fd, cleanupCallback) {
-    if (err) throw err;
-    var path = staticroot + req.query.url.substring(1);
-    if (path.lastIndexOf('/') === path.length - 1)
-      path += 'index.html'
+
+var validateXml = function (path, res, cleanupCallback) {
     exec("xmllint " + path, function(error, stdout, stderr) { 
       var array = stderr.toString().split("\n");
       var out = [];
@@ -60,8 +56,40 @@ app.get(/^\/(validate).+/, function (req, res, next) {
       res.end(JSON.stringify(out));
       cleanupCallback();
     });
+}
+
+var validateXmlWindows = function (path, res, cleanupCallback) {
+    exec("xmllint_windows " + path, function(error, stdout, stderr) { 
+      var array = stderr.toString().split("\n");
+      var out = [];
+      for (var i = 0; i < array.length; i ++) {
+        out = out.concat(array.slice(i, i + 3))
+        // console.log('preserving', array.slice(i, i + 3), out)
+      }
+      // console.log(array)
+      // console.log(out)
+      res.writeHead(200, { 'Content-Type': 'application/json' }); 
+      res.end(JSON.stringify(out));
+      cleanupCallback();
+    });
+}
+
+app.get(/^\/(validate).+/, function (req, res, next) {
+  tmp.file(function _tempFileCreated(err, path, fd, cleanupCallback) {
+    if (err) throw err;
+    var path = staticroot + req.query.url.substring(1);
+    if (path.lastIndexOf('/') === path.length - 1)
+      path += 'index.html'
+
+    if (process.platform.indexOf('win32') >= 0) {
+      out = validateXmlWindows (path, res, cleanupCallback);
+    }
+    else {
+      out = validateXml (path, res, cleanupCallback);
+    }
   });
 });
+
 
 var primus = new Primus(server, { transformer: 'SockJS'});
 var state;
