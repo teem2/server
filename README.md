@@ -8,7 +8,7 @@ Be sure to run:
 
     npm install
 
-If your machine doesn't have 'xmllint' available on the command-line, you'll need to install it, e.g. [xmllint for windows](https://code.google.com/p/xmllint/)
+If your machine doesn't have 'xmllint' available on the command-line, you'll need to install it. On Windows, a version of xmllint_windows is checked in (a small .NET application). This is based upon [xmllint for windows](https://code.google.com/p/xmllint/).
 
 ### Starting the server
 
