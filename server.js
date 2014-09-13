@@ -4,7 +4,6 @@ var async = require('async');
 var Primus = require('primus.io')
 var compress = require('compression')
 var exec = require('child_process').exec;
-var tmp = require('tmp');
 var fs = require('fs');
 
 var app = express();
@@ -15,9 +14,15 @@ app.use(compress());
 var apiProxy = require('./apiproxy.js')
 app.use(apiProxy(new RegExp('^\/api\/')));
 
-var staticroot = __dirname + '/' + process.env.DREEM_ROOT
-console.log('serving static root from', staticroot);
-app.use(express.static(staticroot));
+var dreemroot = __dirname + '/' + process.env.DREEM_ROOT
+console.log('serving Dreem from', dreemroot);
+app.use(express.static(dreemroot));
+
+if (process.env.DREEM_PROJECTS_ROOT) {
+    var projectsroot = __dirname + '/' + process.env.DREEM_PROJECTS_ROOT
+    console.log('serving project root from', projectsroot);
+    app.use('/projects', express.static(projectsroot));
+}
 
 app.use(function (req, res, next) {
     if (req.url.match(/^\/(css|js|img|font|api)\/.+/)) {
@@ -38,7 +43,7 @@ var findErrors = function (parsererror) {
   return skip
 }
 
-var validateXml = function (path, res, cleanupCallback) {
+var validateXml = function (path, resultsCallback) {
     exec("xmllint " + path, function(error, stdout, stderr) { 
       var array = stderr.toString().split("\n");
       var out = [];
@@ -50,15 +55,11 @@ var validateXml = function (path, res, cleanupCallback) {
           // console.log('preserving', array.slice(i, i + 3), out)
         }
       }
-      // console.log(array)
-      // console.log(out)
-      res.writeHead(200, { 'Content-Type': 'application/json' }); 
-      res.end(JSON.stringify(out));
-      cleanupCallback();
+      resultsCallback(out);
     });
 }
 
-var validateXmlWindows = function (path, res, cleanupCallback) {
+var validateXmlWindows = function (path, resultsCallback) {
     exec("xmllint_windows " + path, function(error, stdout, stderr) { 
       var array = stderr.toString().split("\n");
       var out = [];
@@ -66,30 +67,36 @@ var validateXmlWindows = function (path, res, cleanupCallback) {
         out = out.concat(array.slice(i, i + 3))
         // console.log('preserving', array.slice(i, i + 3), out)
       }
-      // console.log(array)
-      // console.log(out)
-      res.writeHead(200, { 'Content-Type': 'application/json' }); 
-      res.end(JSON.stringify(out));
-      cleanupCallback();
+      resultsCallback(out);
     });
 }
 
 app.get(/^\/(validate).+/, function (req, res, next) {
-  tmp.file(function _tempFileCreated(err, path, fd, cleanupCallback) {
-    if (err) throw err;
-    var path = staticroot + req.query.url.substring(1);
+    var path = req.query.url.substring(1);
+    // handle project and root paths
+    if (path.indexOf('projects/') === 0){
+        path = projectsroot + path.substring(9);
+    } else {
+        path = dreemroot + path;
+    }
+
     if (path.lastIndexOf('/') === path.length - 1)
-      path += 'index.html'
+        path += 'index.html';
+
+    // console.log('validating path', path)
+
+    var sendresults = function(results) {
+        // console.log(results);
+        res.writeHead(200, { 'Content-Type': 'application/json' }); 
+        res.end(JSON.stringify(results));
+    }
 
     if (process.platform.indexOf('win32') >= 0) {
-      out = validateXmlWindows (path, res, cleanupCallback);
+        validateXmlWindows(path, sendresults);
+    } else {
+        validateXml(path, sendresults);
     }
-    else {
-      out = validateXml (path, res, cleanupCallback);
-    }
-  });
 });
-
 
 var primus = new Primus(server, { transformer: 'SockJS'});
 var state;
@@ -108,7 +115,7 @@ primus.on('connection', function (spark) {
 })
 
 // var vfs = require('vfs-local')({
-//   root: staticroot,
+//   root: dreemroot,
 //   httpRoot: root,
 // });
 
