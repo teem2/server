@@ -20,7 +20,7 @@ The optional DEBUG flag shows event bus information in the shell:
 
     DEBUG=true DREEM_ROOT=../dreem/ node server.js
 
-The optional DREEM_PROJECTS_ROOT flag will mount a projects directory at the root, e.g. [http://localhost:8080/projects/](http://localhost:8080/projects/)':
+The optional DREEM_PROJECTS_ROOT flag will mount a projects directory at the root, e.g. [http://localhost:8080/projects/]()':
 
     DREEM_PROJECTS_ROOT=../projects/ DREEM_ROOT=../dreem/ node server.js
 
@@ -38,7 +38,7 @@ To use Rovi APIs, prepend /api/ to the URL, e.g.
 See the [Rovi docs](http://prod-doc.rovicorp.com/mashery/index.php/Rovi-Data) for more info.
 
 ### Running demos
-Once your server is running, the directory specified by DREEM_ROOT is served from the root URL, e.g. [http://localhost:8080/timeline.html](http://localhost:8080/timeline.html). If you specified a project root, you should be able to run your examples from [http://localhost:8080/projects/](http://localhost:8080/projects/).
+Once your server is running, the directory specified by DREEM_ROOT is served from the root URL, e.g. [http://localhost:8080/timeline.html](). If you specified a project root, you should be able to run your examples from [http://localhost:8080/projects/]().
 
 ### Troubleshooting
 On OSX, if you see issues running 'npm install' that say something like 'Failed at the pty.js@0.2.3 install script' try running this on the command line:
