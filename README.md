@@ -37,6 +37,16 @@ To use Rovi APIs, prepend /api/ to the URL, e.g.
 
 See the [Rovi docs](http://prod-doc.rovicorp.com/mashery/index.php/Rovi-Data) for more info.
 
+### Windows users
+Install Node.js and run the application Node.js -> Node.js command prompt
+
+Set the environment variables before running the server.
+
+    set DEBUG=true
+    set DREEM_ROOT=../dreem/
+    node server.js
+
+
 ### Running demos
 Once your server is running, the directory specified by DREEM_ROOT is served from the root URL, e.g. [http://localhost:8080/timeline.html](). If you specified a project root, you should be able to run your examples from [http://localhost:8080/projects/]().
 
