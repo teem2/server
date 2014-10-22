@@ -28,6 +28,7 @@ var Primus = require('primus.io')
 var compress = require('compression')
 var exec = require('child_process').exec;
 var fs = require('fs');
+var proxy = require('express-http-proxy');
 
 var app = express();
 var server = http.createServer(app);
@@ -36,6 +37,16 @@ app.use(compress());
 
 var apiProxy = require('./apiproxy.js')
 app.use(apiProxy(new RegExp('^\/api\/')));
+
+app.use('/img/', proxy('cps-static.rovicorp.com', {
+  filter: function(req, res) {
+     return req.method == 'GET';
+  },
+  forwardPath: function(req, res) {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return require('url').parse(req.url).path;
+  }
+}));
 
 var dreemroot = __dirname + '/' + process.env.DREEM_ROOT
 console.log('serving Dreem from', dreemroot);
