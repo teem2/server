@@ -43,7 +43,8 @@ app.use('/img/', proxy('cps-static.rovicorp.com', {
      return req.method == 'GET';
   },
   forwardPath: function(req, res) {
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    res.setHeader('Expires', 'Mon, 25 Jun 2015 21:31:12 GMT');
     return require('url').parse(req.url).path;
   }
 }));
