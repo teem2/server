@@ -15,6 +15,7 @@
     "express-http-proxy": "^0.2.2",
     "hbs": "~2.7.0",
     "http-proxy": "1.1.2",
+    "limiter": "^1.0.5",
     "primus.io": "~3.1.1",
     "querystring": "0.2.0",
     "rovi": "0.0.1",
