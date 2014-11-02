@@ -22,6 +22,7 @@
  SOFTWARE.
 */
 var http = require('http');
+http.globalAgent.maxSockets = 50;
 var express = require('express');
 var async = require('async');
 var Primus = require('primus.io')
@@ -34,6 +35,17 @@ var app = express();
 var server = http.createServer(app);
 
 app.use(compress());
+
+app.use(function (req, res, next) {
+    if (req.url.match(/^\/(css|js|img|font|api)\/.+/)) {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+    next();
+});
+
+var dreemroot = __dirname + '/' + process.env.DREEM_ROOT
+console.log('serving Dreem from', dreemroot);
+app.use(express.static(dreemroot));
 
 var apiProxy = require('./apiproxy.js')
 app.use(apiProxy(new RegExp('^\/api\/')));
@@ -49,22 +61,12 @@ app.use('/img/', proxy('cps-static.rovicorp.com', {
   }
 }));
 
-var dreemroot = __dirname + '/' + process.env.DREEM_ROOT
-console.log('serving Dreem from', dreemroot);
-app.use(express.static(dreemroot));
-
 if (process.env.DREEM_PROJECTS_ROOT) {
     var projectsroot = __dirname + '/' + process.env.DREEM_PROJECTS_ROOT
     console.log('serving project root from', projectsroot);
     app.use('/projects', express.static(projectsroot));
 }
 
-app.use(function (req, res, next) {
-    if (req.url.match(/^\/(css|js|img|font|api)\/.+/)) {
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-    }
-    next();
-});
 
 var skipErrors = ['parser error : StartTag: invalid element name', 'parser error : xmlParseEntityRef: no name', "parser error : EntityRef: expecting ';'"];
 var findErrors = function (parsererror) {
