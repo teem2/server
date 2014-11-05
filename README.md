@@ -4,7 +4,7 @@
 
 Install [Node.js v0.10.x](http://nodejs.org/download/)
 
-Next, be sure to run:
+Next, be sure to run this inside the server directory:
 
     npm install
 
