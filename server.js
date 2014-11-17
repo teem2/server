@@ -145,7 +145,7 @@ primus.on('connection', function (spark) {
   spark.on('data', function (msg) {
     state = msg;
     if (process.env.DEBUG) {
-      console.log('data', state);
+      console.log('data', JSON.stringify(state));
     }
     primus.write(msg);
   });
