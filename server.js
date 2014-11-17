@@ -25,7 +25,7 @@ var http = require('http');
 http.globalAgent.maxSockets = 50;
 var express = require('express');
 var async = require('async');
-var Primus = require('primus.io')
+var Primus = require('primus')
 var compress = require('compression')
 var exec = require('child_process').exec;
 var fs = require('fs');
@@ -139,15 +139,15 @@ var primus = new Primus(server, { transformer: 'SockJS'});
 var state;
 primus.on('connection', function (spark) {
   if (state) {
-    primus.send('message', state);
+    primus.write(state);
   }
 
-  spark.on('message', function (msg) {
+  spark.on('data', function (msg) {
     state = msg;
     if (process.env.DEBUG) {
-      console.log('message', state);
+      console.log('data', state);
     }
-    primus.send('message', state);
+    primus.write(msg);
   });
 })
 
