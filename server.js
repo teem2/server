@@ -162,7 +162,6 @@ var watchFile = function watchFile(filename, path){
           res.end(path)
         }
         watchRes = []
-        primus.write({filechange: path})
       }
     }
   },50)
