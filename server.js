@@ -69,45 +69,49 @@ if (process.env.DREEM_PROJECTS_ROOT) {
 }
 
 
-var skipErrors = ['parser error : StartTag: invalid element name', 'parser error : xmlParseEntityRef: no name', "parser error : EntityRef: expecting ';'"];
-var findErrors = function (parsererror) {
-  skip = false
-  skipErrors.forEach(function(skiperror) {
-    if (parsererror.indexOf(skiperror) > -1) {
-      skip = true;
-      return;
-    }
-  })
-  return skip
-}
-
-var validateXml = function (path, resultsCallback) {
-  exec("xmllint " + path, function(error, stdout, stderr) { 
-    var array = stderr.toString().split("\n");
-    var out = [];
-    for (var i = 0; i < array.length; i += 3) {
-      if (findErrors(array[i])) {
-        // console.log('skipping', array[i])
-      } else if (i + 3 < array.length) {
-        out = out.concat(array.slice(i, i + 3))
-        // console.log('preserving', array.slice(i, i + 3), out)
+validate = (function () {
+  var skipErrors = ['parser error : StartTag: invalid element name', 'parser error : xmlParseEntityRef: no name', "parser error : EntityRef: expecting ';'"];
+  var findErrors = function (parsererror) {
+    skip = false
+    skipErrors.forEach(function(skiperror) {
+      if (parsererror.indexOf(skiperror) > -1) {
+        skip = true;
+        return;
       }
-    }
-    resultsCallback(out);
-  });
-}
+    })
+    return skip
+  }
 
-var validateXmlWindows = function (path, resultsCallback) {
-  exec("xmllint_windows " + path, function(error, stdout, stderr) { 
-    var array = stderr.toString().split("\n");
-    var out = [];
-    for (var i = 0; i < array.length; i ++) {
-      out = out.concat(array.slice(i, i + 3))
-      // console.log('preserving', array.slice(i, i + 3), out)
+  if (process.platform.indexOf('win32') >= 0) {
+    return function (path, resultsCallback) {
+      exec("xmllint_windows " + path, function(error, stdout, stderr) { 
+        var array = stderr.toString().split("\n");
+        var out = [];
+        for (var i = 0; i < array.length; i ++) {
+          out = out.concat(array.slice(i, i + 3))
+          // console.log('preserving', array.slice(i, i + 3), out)
+        }
+        resultsCallback(out);
+      });
     }
-    resultsCallback(out);
-  });
-}
+  } else {
+    return function (path, resultsCallback) {
+      exec("xmllint " + path, function(error, stdout, stderr) { 
+        var array = stderr.toString().split("\n");
+        var out = [];
+        for (var i = 0; i < array.length; i += 3) {
+          if (findErrors(array[i])) {
+            // console.log('skipping', array[i])
+          } else if (i + 3 < array.length) {
+            out = out.concat(array.slice(i, i + 3))
+            // console.log('preserving', array.slice(i, i + 3), out)
+          }
+        }
+        resultsCallback(out);
+      });
+    }
+  }
+})()
 
 app.get(/^\/(validate).+/, function (req, res, next) {
   var path = req.query.url.substring(1);
@@ -129,50 +133,45 @@ app.get(/^\/(validate).+/, function (req, res, next) {
     res.end(JSON.stringify(results));
   }
 
-  if (process.platform.indexOf('win32') >= 0) {
-    validateXmlWindows(path, sendresults);
-  } else {
-    validateXml(path, sendresults);
-  }
+  validate(path, sendresults)
 });
 
 
+var watchfile = (function() {
+  var responses = []
+  var watch = "mtime" // or use "ctime"
+  var root = path.resolve(__dirname).toString();
+  var delta = 0
+  var watching = {}
+  var stats = {}
 
-var watch = "mtime" // or use "ctime"
-var watchRes = []
-var root = path.resolve(__dirname).toString();
-var delta = 0
-var watching = {}
-var stats = {}
-var watchFile = function watchFile(filename, path){
-  if(watching[filename]) return
-  stats[filename] = fs.statSync(filename)[watch].toString()
-  // console.log('watching file',filename)
-  watching[filename] = setInterval(function(){
-    var stat = fs.statSync(filename)
-    var diff = 0
-    if(stat[watch].toString() != stats[filename]){ 
-      stats[filename] = stat[watch].toString()
-      if(Date.now() - delta > 2000){
-        delta = Date.now()
-        // console.log(path + " changed, sending reload to frontend ----")
-        for(var i in watchRes){
-          var res = watchRes[i]
-          res.writeHead(200, {"Content-Type": "text/plain"})
-          res.end(path)
+  return function (filename, res, path){
+    responses.push(res)
+    if(watching[filename]) return
+    stats[filename] = fs.statSync(filename)[watch].toString()
+    // console.log('watching file',filename)
+    watching[filename] = setInterval(function(){
+      var stat = fs.statSync(filename)
+      var diff = 0
+      if (stat[watch].toString() != stats[filename]) {
+        stats[filename] = stat[watch].toString()
+        if (Date.now() - delta > 2000) {
+          delta = Date.now()
+          // console.log(path + " changed, sending reload to frontend")
+          for (var i = 0; i < responses.length; i++) {
+            var res = responses[i]
+            res.writeHead(200, {"Content-Type": "text/plain"})
+            res.end(path)
+          }
+          responses = []
         }
-        watchRes = []
       }
-    }
-  },50)
-}
+    },50)
+  }
+})()
 
 app.get(/^\/(watchfile).+/, function (req, res, next) {
   var name = req.query.url.substring(1)
-  if (name === "_reloader_") {
-    watchRes.push(res)
-    return
-  }   
   if (name.indexOf('projects/') === 0){
     name = projectsroot + name.substring(9);
   } else {
@@ -186,9 +185,7 @@ app.get(/^\/(watchfile).+/, function (req, res, next) {
       return
     }
 
-    watchFile(name, req.query.url)
-    res.writeHead(200)
-    res.end()
+    watchfile(name, res, req.query.url)
   });
 });
 
