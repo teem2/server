@@ -25,7 +25,7 @@ var http = require('http');
 http.globalAgent.maxSockets = 50;
 var express = require('express');
 var async = require('async');
-var Primus = require('primus')
+var Primus = require('primus.io')
 var compress = require('compression')
 var exec = require('child_process').exec;
 var fs = require('fs');
@@ -179,7 +179,7 @@ app.get(/^\/(watchfile).+/, function (req, res, next) {
   }
   fs.exists(name, function(x) {
     if (! x) {
-      console.log('File not found:'+name)
+      // console.log('File not found:'+name)
       res.writeHead(404)
       res.end("file not found")
       return
@@ -196,14 +196,24 @@ primus.on('connection', function (spark) {
     primus.write(state);
   }
 
-  spark.on('data', function (msg) {
-    state = msg;
+  spark.on('data', function (data) {
+    state = data
     if (process.env.DEBUG) {
-      console.log('data', JSON.stringify(state));
+      console.log('data', JSON.stringify(data));
     }
-    primus.write(msg);
+    var room = 'broadcast';
+    spark.join(room, function () {
+      // send message to all clients except this one
+      // spark.room(room).except(spark.id).write(spark.id + ' joined');
+      spark.room(room).except(spark.id).write(data);
+    });
   });
 })
+
+// primus.on('joinroom', function (service, spark) {
+//   spark.room('broadcast').except(spark.id).write({status: 'join', id: spark.id, service: service});
+//   console.log(spark.id + ' joined ' + service);
+// });
 
 // var vfs = require('vfs-local')({
 //   root: dreemroot,
