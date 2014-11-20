@@ -30,6 +30,7 @@ var compress = require('compression')
 var exec = require('child_process').exec;
 var fs = require('fs');
 var proxy = require('express-http-proxy');
+var path = require('path')
 
 var app = express();
 var server = http.createServer(app);
@@ -62,94 +63,157 @@ app.use('/img/', proxy('cps-static.rovicorp.com', {
 }));
 
 if (process.env.DREEM_PROJECTS_ROOT) {
-    var projectsroot = __dirname + '/' + process.env.DREEM_PROJECTS_ROOT
-    console.log('serving project root from', projectsroot);
-    app.use('/projects', express.static(projectsroot));
+  var projectsroot = __dirname + '/' + process.env.DREEM_PROJECTS_ROOT
+  console.log('serving project root from', projectsroot);
+  app.use('/projects', express.static(projectsroot));
 }
 
 
-var skipErrors = ['parser error : StartTag: invalid element name', 'parser error : xmlParseEntityRef: no name', "parser error : EntityRef: expecting ';'"];
-var findErrors = function (parsererror) {
-  skip = false
-  skipErrors.forEach(function(skiperror) {
-    if (parsererror.indexOf(skiperror) > -1) {
-      skip = true;
-      return;
-    }
-  })
-  return skip
-}
+validate = (function () {
+  var skipErrors = ['parser error : StartTag: invalid element name', 'parser error : xmlParseEntityRef: no name', "parser error : EntityRef: expecting ';'"];
+  var findErrors = function (parsererror) {
+    skip = false
+    skipErrors.forEach(function(skiperror) {
+      if (parsererror.indexOf(skiperror) > -1) {
+        skip = true;
+        return;
+      }
+    })
+    return skip
+  }
 
-var validateXml = function (path, resultsCallback) {
-    exec("xmllint " + path, function(error, stdout, stderr) { 
-      var array = stderr.toString().split("\n");
-      var out = [];
-      for (var i = 0; i < array.length; i += 3) {
-        if (findErrors(array[i])) {
-          // console.log('skipping', array[i])
-        } else if (i + 3 < array.length) {
+  if (process.platform.indexOf('win32') >= 0) {
+    return function (path, resultsCallback) {
+      exec("xmllint_windows " + path, function(error, stdout, stderr) { 
+        var array = stderr.toString().split("\n");
+        var out = [];
+        for (var i = 0; i < array.length; i ++) {
           out = out.concat(array.slice(i, i + 3))
           // console.log('preserving', array.slice(i, i + 3), out)
         }
-      }
-      resultsCallback(out);
-    });
-}
-
-var validateXmlWindows = function (path, resultsCallback) {
-    exec("xmllint_windows " + path, function(error, stdout, stderr) { 
-      var array = stderr.toString().split("\n");
-      var out = [];
-      for (var i = 0; i < array.length; i ++) {
-        out = out.concat(array.slice(i, i + 3))
-        // console.log('preserving', array.slice(i, i + 3), out)
-      }
-      resultsCallback(out);
-    });
-}
+        resultsCallback(out);
+      });
+    }
+  } else {
+    return function (path, resultsCallback) {
+      exec("xmllint " + path, function(error, stdout, stderr) { 
+        var array = stderr.toString().split("\n");
+        var out = [];
+        for (var i = 0; i < array.length; i += 3) {
+          if (findErrors(array[i])) {
+            // console.log('skipping', array[i])
+          } else if (i + 3 < array.length) {
+            out = out.concat(array.slice(i, i + 3))
+            // console.log('preserving', array.slice(i, i + 3), out)
+          }
+        }
+        resultsCallback(out);
+      });
+    }
+  }
+})()
 
 app.get(/^\/(validate).+/, function (req, res, next) {
-    var path = req.query.url.substring(1);
-    // handle project and root paths
-    if (path.indexOf('projects/') === 0){
-        path = projectsroot + path.substring(9);
-    } else {
-        path = dreemroot + path;
+  var path = req.query.url.substring(1);
+  // handle project and root paths
+  if (path.indexOf('projects/') === 0){
+    path = projectsroot + path.substring(9);
+  } else {
+    path = dreemroot + path;
+  }
+
+  if (path.lastIndexOf('/') === path.length - 1)
+    path += 'index.html';
+
+  // console.log('validating path', path)
+
+  var sendresults = function(results) {
+    // console.log(results);
+    res.writeHead(200, { 'Content-Type': 'application/json' }); 
+    res.end(JSON.stringify(results));
+  }
+
+  validate(path, sendresults)
+});
+
+
+var watchfile = (function() {
+  var responses = []
+  var watch = "mtime" // or use "ctime"
+  var root = path.resolve(__dirname).toString();
+  var delta = 0
+  var watching = {}
+  var stats = {}
+
+  return function (filename, res, path){
+    responses.push(res)
+    if(watching[filename]) return
+    stats[filename] = fs.statSync(filename)[watch].toString()
+    // console.log('watching file',filename)
+    watching[filename] = setInterval(function(){
+      var stat = fs.statSync(filename)
+      var diff = 0
+      if (stat[watch].toString() != stats[filename]) {
+        stats[filename] = stat[watch].toString()
+        if (Date.now() - delta > 2000) {
+          delta = Date.now()
+          // console.log(path + " changed, sending reload to frontend")
+          for (var i = 0; i < responses.length; i++) {
+            var res = responses[i]
+            res.writeHead(200, {"Content-Type": "text/plain"})
+            res.end(path)
+          }
+          responses = []
+        }
+      }
+    },50)
+  }
+})()
+
+app.get(/^\/(watchfile).+/, function (req, res, next) {
+  var name = req.query.url.substring(1)
+  if (name.indexOf('projects/') === 0){
+    name = projectsroot + name.substring(9);
+  } else {
+    name = dreemroot + name;
+  }
+  fs.exists(name, function(x) {
+    if (! x) {
+      // console.log('File not found:'+name)
+      res.writeHead(404)
+      res.end("file not found")
+      return
     }
 
-    if (path.lastIndexOf('/') === path.length - 1)
-        path += 'index.html';
-
-    // console.log('validating path', path)
-
-    var sendresults = function(results) {
-        // console.log(results);
-        res.writeHead(200, { 'Content-Type': 'application/json' }); 
-        res.end(JSON.stringify(results));
-    }
-
-    if (process.platform.indexOf('win32') >= 0) {
-        validateXmlWindows(path, sendresults);
-    } else {
-        validateXml(path, sendresults);
-    }
+    watchfile(name, res, req.query.url)
+  });
 });
 
 var primus = new Primus(server, { transformer: 'SockJS'});
 var state;
 primus.on('connection', function (spark) {
   if (state) {
-    primus.send('message', state);
+    primus.write(state);
   }
 
-  spark.on('message', function (msg) {
-    state = msg;
+  spark.on('data', function (data) {
+    state = data
     if (process.env.DEBUG) {
-      console.log('message', state);
+      console.log('data', JSON.stringify(data));
     }
-    primus.send('message', state);
+    var room = 'broadcast';
+    spark.join(room, function () {
+      // send message to all clients except this one
+      // spark.room(room).except(spark.id).write(spark.id + ' joined');
+      spark.room(room).except(spark.id).write(data);
+    });
   });
 })
+
+// primus.on('joinroom', function (service, spark) {
+//   spark.room('broadcast').except(spark.id).write({status: 'join', id: spark.id, service: service});
+//   console.log(spark.id + ' joined ' + service);
+// });
 
 // var vfs = require('vfs-local')({
 //   root: dreemroot,

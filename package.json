@@ -8,17 +8,16 @@
     "url": "https://github.com/teem2/server"
   },
   "dependencies": {
-    "async": "0.8.0",
-    "compression": "~1.0.2",
-    "express": "4.3.1",
+    "async": "^0.8.0",
+    "compression": "^1.2.0",
+    "express": "^4.10.2",
     "express-http-proxy": "^0.2.2",
-    "hbs": "~2.7.0",
-    "http-proxy": "1.1.2",
+    "hbs": "^2.7.0",
+    "http-proxy": "^1.6.2",
     "limiter": "^1.0.5",
-    "primus.io": "~3.1.1",
+    "primus.io": "^3.1.2",
     "rovi": "0.0.1",
-    "sockjs": "~0.3.9",
-    "tmp": "~0.0.24"
+    "sockjs": "^0.3.11"
   },
   "engine": "node >= 0.10.0"
 }
