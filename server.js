@@ -22,7 +22,7 @@
  SOFTWARE.
 */
 var http = require('http');
-http.globalAgent.maxSockets = 50;
+http.globalAgent.maxSockets = 25;
 var express = require('express');
 var async = require('async');
 var Primus = require('primus.io')
@@ -38,10 +38,10 @@ var server = http.createServer(app);
 app.use(compress());
 
 app.use(function (req, res, next) {
-    if (req.url.match(/^\/(css|js|img|font|api)\/.+/)) {
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-    }
-    next();
+  if (req.url.match(/^\/(css|js|img|font|api)\/.+/)) {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+  }
+  next();
 });
 
 var dreemroot = __dirname + '/' + process.env.DREEM_ROOT
@@ -140,6 +140,7 @@ app.get(/^\/(validate).+/, function (req, res, next) {
 var watchfile = (function() {
   var responses = []
   var watch = "mtime" // or use "ctime"
+  var refreshinterval = 200
   var root = path.resolve(__dirname).toString();
   var delta = 0
   var watching = {}
@@ -151,22 +152,32 @@ var watchfile = (function() {
     stats[filename] = fs.statSync(filename)[watch].toString()
     // console.log('watching file',filename)
     watching[filename] = setInterval(function(){
-      var stat = fs.statSync(filename)
-      var diff = 0
-      if (stat[watch].toString() != stats[filename]) {
-        stats[filename] = stat[watch].toString()
-        if (Date.now() - delta > 2000) {
-          delta = Date.now()
-          // console.log(path + " changed, sending reload to frontend")
-          for (var i = 0; i < responses.length; i++) {
-            var res = responses[i]
-            res.writeHead(200, {"Content-Type": "text/plain"})
-            res.end(path)
+      fs.stat(filename, function(err, stat) {
+        if (stat) {
+          var diff = 0
+          if (stat[watch].toString() != stats[filename]) {
+            stats[filename] = stat[watch].toString()
+            if (Date.now() - delta > 2000) {
+              delta = Date.now()
+              // console.log(path + " changed, sending reload to frontend")
+              for (var i = 0; i < responses.length; i++) {
+                var res = responses[i]
+                res.writeHead(200, {"Content-Type": "text/plain"})
+                res.end(path)
+              }
+              responses = []
+            }
           }
-          responses = []
+        } else if (err) {
+          // Sometimes files disappear, like when docs are rebuilt
+          console.log('error', err)
+          // stop listening
+          clearInterval(watching[filename])
+          // allow listening again
+          watching[filename] = false
         }
-      }
-    },50)
+      });
+    }, refreshinterval)
   }
 })()
 
