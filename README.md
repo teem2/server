@@ -44,8 +44,8 @@ Install Node.js and run the application Node.js -> Node.js command prompt
 
 Set the environment variables before running the server.
 
-    set DEBUG=true
-    set DREEM_ROOT=../dreem/
+    DEBUG=true
+    DREEM_ROOT=../dreem/
     node server.js
 
 
