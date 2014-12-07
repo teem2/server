@@ -4,6 +4,7 @@ var proxy = require('http-proxy').createProxy();
 var querystring = require('querystring');
 var roviSig = require('./node_modules/rovi/lib/sig.js')
 var RateLimiter = require('limiter').RateLimiter;
+// Allow one request every 255ms
 var limiter = new RateLimiter(1, 255);
 
 module.exports = function (pattern, target, host, port) {
@@ -29,6 +30,10 @@ module.exports = function (pattern, target, host, port) {
           // aggro cache, see https://devcenter.heroku.com/articles/increasing-application-performance-with-http-cache-headers
           res.headers['Cache-Control'] = 'public, max-age=31536000';
           res.headers['Expires'] = 'Mon, 25 Jun 2015 21:31:12 GMT';
+        });
+
+        proxy.on('error', function (err) {
+          console.error('proxy error', req.url, err);
         });
 
         proxy.web(req, res, {
