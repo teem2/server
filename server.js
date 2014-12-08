@@ -1,18 +1,18 @@
 /*
  The MIT License (MIT)
- 
+
  Copyright ( c ) 2014 Teem2 LLC
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all
  copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -84,7 +84,7 @@ validate = (function () {
 
   if (process.platform.indexOf('win32') >= 0) {
     return function (path, resultsCallback) {
-      exec("xmllint_windows " + path, function(error, stdout, stderr) { 
+      exec("xmllint_windows " + path, function(error, stdout, stderr) {
         var array = stderr.toString().split("\n");
         var out = [];
         for (var i = 0; i < array.length; i ++) {
@@ -96,7 +96,7 @@ validate = (function () {
     }
   } else {
     return function (path, resultsCallback) {
-      exec("xmllint " + path, function(error, stdout, stderr) { 
+      exec("xmllint " + path, function(error, stdout, stderr) {
         var array = stderr.toString().split("\n");
         var out = [];
         for (var i = 0; i < array.length; i += 3) {
@@ -129,7 +129,7 @@ app.get(/^\/(validate).+/, function (req, res, next) {
 
   var sendresults = function(results) {
     // console.log(results);
-    res.writeHead(200, { 'Content-Type': 'application/json' }); 
+    res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(results));
   }
 
@@ -202,17 +202,19 @@ app.get(/^\/(watchfile).+/, function (req, res, next) {
 
 var primus = new Primus(server, { transformer: 'SockJS'});
 var state;
+var room = 'broadcast';
 primus.on('connection', function (spark) {
   if (state) {
     primus.write(state);
   }
+
+  spark.join(room);
 
   spark.on('data', function (data) {
     state = data
     if (process.env.DEBUG) {
       console.log('data', JSON.stringify(data));
     }
-    var room = 'broadcast';
     spark.join(room, function () {
       // send message to all clients except this one
       // spark.room(room).except(spark.id).write(spark.id + ' joined');
@@ -220,11 +222,6 @@ primus.on('connection', function (spark) {
     });
   });
 })
-
-// primus.on('joinroom', function (service, spark) {
-//   spark.room('broadcast').except(spark.id).write({status: 'join', id: spark.id, service: service});
-//   console.log(spark.id + ' joined ' + service);
-// });
 
 // var vfs = require('vfs-local')({
 //   root: dreemroot,
