@@ -24,17 +24,9 @@
 var http = require('http');
 http.globalAgent.maxSockets = 25;
 var express = require('express');
-var async = require('async');
-var Primus = require('primus.io')
-var compress = require('compression')
-var exec = require('child_process').exec;
-var fs = require('fs');
-var proxy = require('express-http-proxy');
-var path = require('path')
-
 var app = express();
-var server = http.createServer(app);
 
+var compress = require('compression')
 app.use(compress());
 
 app.use(function (req, res, next) {
@@ -51,6 +43,7 @@ app.use(express.static(dreemroot));
 var apiProxy = require('./apiproxy.js')
 app.use(apiProxy(new RegExp('^\/api\/')));
 
+var proxy = require('express-http-proxy');
 app.use('/img/', proxy('cps-static.rovicorp.com', {
   filter: function(req, res) {
      return req.method == 'GET';
@@ -68,7 +61,7 @@ if (process.env.DREEM_PROJECTS_ROOT) {
   app.use('/projects', express.static(projectsroot));
 }
 
-
+var exec = require('child_process').exec;
 validate = (function () {
   var skipErrors = ['parser error : StartTag: invalid element name', 'parser error : xmlParseEntityRef: no name', "parser error : EntityRef: expecting ';'"];
   var findErrors = function (parsererror) {
@@ -137,6 +130,8 @@ app.get(/^\/(validate).+/, function (req, res, next) {
 });
 
 
+var fs = require('fs');
+var path = require('path')
 var watchfile = (function() {
   var responses = []
   var watch = "mtime" // or use "ctime"
@@ -170,7 +165,7 @@ var watchfile = (function() {
           }
         } else if (err) {
           // Sometimes files disappear, like when docs are rebuilt
-          console.log('error', err)
+          // console.log('error', err)
           // stop listening
           clearInterval(watching[filename])
           // allow listening again
@@ -200,28 +195,75 @@ app.get(/^\/(watchfile).+/, function (req, res, next) {
   });
 });
 
-var primus = new Primus(server, { transformer: 'SockJS'});
+var server = http.createServer(app);
+
 var state;
-var room = 'broadcast';
+var defaultroom = 'broadcast';
+var devices = {};
+
+var Primus = require('primus.io')
+var primus = new Primus(server, { transformer: 'SockJS' });
+var UAParser = require('ua-parser-js');
+var uaparser = new UAParser();
+
+var getDeviceID = function(req) {
+  // console.log('getDeviceID', recentip + '~' + req.headers['user-agent'])
+  return recentip + '~' + req.headers['user-agent']
+}
+
+var updateDevices = function () {
+  var devicelist = [];
+  var keys = Object.keys(devices).sort();
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    devicelist.push(devices[key]);
+  }
+  primus.write({type: 'devices', data: devicelist});
+}
+
+// grab the remote IP before it disappears in the bowels of primus - key for unregistering
+// devices when they disconnect
+var recentip = null
+primus.before('name', function (req, res) {
+  recentip = req.headers['x-forwarded-for'] ||
+     req.connection.remoteAddress ||
+     (req.socket && req.socket.remoteAddress) ||
+     (req.connection.socket && req.connection.socket.remoteAddress);
+});
+
 primus.on('connection', function (spark) {
+  obj = uaparser.setUA(spark.headers['user-agent']).getResult();
+  // console.log(JSON.stringify(devices))
+  obj.ip = recentip;
+  obj.id = spark.id
+  devices[getDeviceID(spark.request)] = obj
+  // console.log('device connected', getDeviceID(spark.request))
+  updateDevices();
+
   if (state) {
     primus.write(state);
   }
 
-  spark.join(room);
+  // always join the default room
+  spark.join(defaultroom);
 
   spark.on('data', function (data) {
     state = data
     if (process.env.DEBUG) {
       console.log('data', JSON.stringify(data));
     }
-    spark.join(room, function () {
+    spark.join(defaultroom, function () {
       // send message to all clients except this one
-      // spark.room(room).except(spark.id).write(spark.id + ' joined');
-      spark.room(room).except(spark.id).write(data);
+      spark.room(defaultroom).except(spark.id).write(data);
     });
   });
 })
+
+primus.on('disconnection', function (spark) {
+  delete devices[getDeviceID(spark.request)]
+  // console.log('device disconnected', getDeviceID(spark.request))
+  updateDevices();
+});
 
 // var vfs = require('vfs-local')({
 //   root: dreemroot,
