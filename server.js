@@ -157,7 +157,7 @@ var watchfile = (function() {
               // console.log(path + " changed, sending reload to frontend")
               for (var i = 0; i < responses.length; i++) {
                 var res = responses[i]
-                res.writeHead(200, {"Content-Type": "text/plain"})
+                // res.writeHead(200, {"Content-Type": "text/plain"})
                 res.end(path)
               }
               responses = []
@@ -177,22 +177,30 @@ var watchfile = (function() {
 })()
 
 app.get(/^\/(watchfile).+/, function (req, res, next) {
-  var name = req.query.url.substring(1)
-  if (name.indexOf('projects/') === 0){
-    name = projectsroot + name.substring(9);
-  } else {
-    name = dreemroot + name;
-  }
-  fs.exists(name, function(x) {
-    if (! x) {
-      // console.log('File not found:'+name)
-      res.writeHead(404)
-      res.end("file not found")
-      return
+  var urls = req.query.url
+  urls.forEach(function (url) {
+    if (url.indexOf('/') !== 0){
+      return;
     }
+    // console.log('watchfile', url)
 
-    watchfile(name, res, req.query.url)
-  });
+    var path = url.substring(1);
+    if (path.indexOf('projects/') === 0){
+      path = projectsroot + path.substring(9);
+    } else {
+      path = dreemroot + path;
+    }
+    fs.exists(path, function(x) {
+      if (! x) {
+        // console.log('File not found:' + path)
+        // res.writeHead(404)
+        res.end("file not found")
+        return
+      }
+
+      watchfile(path, res, url)
+    });
+  })
 });
 
 var server = http.createServer(app);
