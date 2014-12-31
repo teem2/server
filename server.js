@@ -69,80 +69,14 @@ app.get(/^\/(watchfile).+/, watchfile(projectsroot, dreemroot));
 
 var server = http.createServer(app);
 
-var state;
-var defaultroom = 'broadcast';
-var devices = {};
+var streem = require('./streem.js');
+streem.startServer(server);
 
-var Primus = require('primus.io')
-var primus = new Primus(server, { transformer: 'SockJS' });
-var UAParser = require('ua-parser-js');
-var uaparser = new UAParser();
-
-var getDeviceID = function(req) {
-  // console.log('getDeviceID', recentip + '~' + req.headers['user-agent'])
-  return recentip + '~' + req.headers['user-agent']
-}
-
-var updateDevices = function () {
-  var devicelist = [];
-  var keys = Object.keys(devices).sort();
-  for (var i = 0; i < keys.length; i++) {
-    var key = keys[i];
-    devicelist.push(devices[key]);
-  }
-  primus.write({type: 'devices', data: devicelist});
-}
-
-// grab the remote IP before it disappears in the bowels of primus - key for unregistering
-// devices when they disconnect
-var recentip = null
-primus.before('name', function (req, res) {
-  recentip = req.headers['x-forwarded-for'] ||
-     req.connection.remoteAddress ||
-     (req.socket && req.socket.remoteAddress) ||
-     (req.connection.socket && req.connection.socket.remoteAddress);
-});
-
-primus.on('connection', function (spark) {
-  obj = uaparser.setUA(spark.headers['user-agent']).getResult();
-  // console.log(JSON.stringify(devices))
-  obj.ip = recentip;
-  obj.id = spark.id
-  devices[getDeviceID(spark.request)] = obj
-  // console.log('device connected', getDeviceID(spark.request))
-  updateDevices();
-
-  if (state) {
-    primus.write(state);
-  }
-
-  // always join the default room
-  spark.join(defaultroom);
-
-  spark.on('data', function (data) {
-    state = data
-    if (process.env.DEBUG) {
-      console.log('data', JSON.stringify(data));
-    }
-    spark.join(defaultroom, function () {
-      // send message to all clients except this one
-      spark.room(defaultroom).except(spark.id).write(data);
-    });
-  });
-})
-
-primus.on('disconnection', function (spark) {
-  delete devices[getDeviceID(spark.request)]
-  // console.log('device disconnected', getDeviceID(spark.request))
-  updateDevices();
-});
-
-// var vfs = require('vfs-local')({
+//var vfs = require('vfs-local')({
 //   root: dreemroot,
 //   httpRoot: root,
-// });
-
-// app.use(require('vfs-http-adapter')("/fs/", vfs));
+//});
+//app.use(require('vfs-http-adapter')("/fs/", vfs));
 
 server.listen(process.env.PORT || 8080, process.env.IP || "0.0.0.0", function(){
   var addr = server.address();
