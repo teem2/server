@@ -25,9 +25,19 @@ var http = require('http');
 http.globalAgent.maxSockets = 25;
 var express = require('express');
 var app = express();
+var fs = require('fs');
 
 var compress = require('compression')
 app.use(compress());
+
+var components = {};
+componentsFiles = fs.readdirSync("./components")
+for (var i=0, l=componentsFiles.length; i<l; i++) {
+  var fileName = componentsFiles[i];
+  var component = require('./components/' + fileName);
+  components[fileName.replace('.js', '')] = component;
+  console.log('Loading Component: ', fileName.replace('.js', ''));
+}
 
 app.use(function (req, res, next) {
   if (req.url.match(/^\/(css|js|img|font|api)\/.+/)) {
@@ -40,8 +50,10 @@ var dreemroot = __dirname + '/' + process.env.DREEM_ROOT
 console.log('serving Dreem from', dreemroot);
 app.use(express.static(dreemroot));
 
-var apiProxy = require('./apiproxy.js')
-app.use(apiProxy(new RegExp('^\/api\/')));
+var apiProxy = components['apiproxy'];
+if (apiProxy) {
+  app.use(apiProxy(new RegExp('^\/api\/')));
+}
 
 var proxy = require('express-http-proxy');
 app.use('/img/', proxy('cps-static.rovicorp.com', {
@@ -61,16 +73,22 @@ if (process.env.DREEM_PROJECTS_ROOT) {
   app.use('/projects', express.static(projectsroot));
 }
 
-var validator = require('./validator.js')
-app.get(/^\/(validate).+/, validator(projectsroot, dreemroot));
+var validator = components['validator'];
+if (validator) {
+  app.get(/^\/(validate).+/, validator(projectsroot, dreemroot));
+}
 
-var watchfile = require('./watchfile.js')
-app.get(/^\/(watchfile).+/, watchfile(projectsroot, dreemroot));
+var watchfile = components['watchfile'];
+if (watchfile) {
+  app.get(/^\/(watchfile).+/, watchfile(projectsroot, dreemroot));
+}
 
 var server = http.createServer(app);
 
-var streem = require('./streem.js');
-streem.startServer(server);
+var streem = components['streem'];
+if (streem) {
+  streem.startServer(server);
+}
 
 //var vfs = require('vfs-local')({
 //   root: dreemroot,
