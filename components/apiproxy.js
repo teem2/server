@@ -2,7 +2,7 @@
 
 var proxy = require('http-proxy').createProxy();
 var querystring = require('querystring');
-var roviSig = require('./node_modules/rovi/lib/sig.js')
+var roviSig = require('../node_modules/rovi/lib/sig.js')
 var RateLimiter = require('limiter').RateLimiter;
 // Allow one request every 255ms
 var limiter = new RateLimiter(1, 255);
