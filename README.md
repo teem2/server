@@ -50,7 +50,7 @@ Set the environment variables before running the server.
 
 
 ### Running demos
-Once your server is running, the directory specified by DREEM_ROOT is served from the root URL, e.g. [http://localhost:8080/timeline.html](). If you specified a project root, you should be able to run your examples from [http://localhost:8080/projects/](). Note that the server will not list the contents of directories, so you'll need to point to a specific html file, e.g. http://localhost:8080/timeline.html
+Once your server is running, the directory specified by DREEM_ROOT is served from the root URL, e.g. [http://localhost:8080/examples/timeline.html](). If you specified a project root, you should be able to run your examples from [http://localhost:8080/examples/projects/](). Note that the server will not list the contents of directories, so you'll need to point to a specific html file, e.g. http://localhost:8080/timeline.html
 
 ### Troubleshooting
 On OSX, if you see issues running 'npm install' that say something like 'Failed at the pty.js@0.2.3 install script' try running this on the command line:
