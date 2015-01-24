@@ -46,7 +46,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-var dreemroot = __dirname + '/../dreem/'//process.env.DREEM_ROOT
+var dreemroot = __dirname + '/' + process.env.DREEM_ROOT
 console.log('serving Dreem from', dreemroot);
 app.use(express.static(dreemroot));
 
