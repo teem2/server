@@ -27,8 +27,8 @@ var express = require('express');
 var app = express();
 var fs = require('fs');
 
-var compress = require('compression')
-app.use(compress());
+//var compress = require('compression')
+//app.use(compress());
 
 var components = {};
 componentsFiles = fs.readdirSync("./components")
@@ -46,7 +46,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-var dreemroot = __dirname + '/' + process.env.DREEM_ROOT
+var dreemroot = __dirname + '/../dreem/'//process.env.DREEM_ROOT
 console.log('serving Dreem from', dreemroot);
 app.use(express.static(dreemroot));
 
@@ -81,6 +81,12 @@ if (validator) {
 var watchfile = components['watchfile'];
 if (watchfile) {
   app.get(/^\/(watchfile).+/, watchfile(projectsroot, dreemroot));
+}
+
+var smokerun = components['smokerun'];
+if (smokerun) {
+  app.get(/^\/smokerun.*/, smokerun.get(projectsroot, dreemroot));
+  app.post(/^\/smokerun.*/, smokerun.post(projectsroot, dreemroot));
 }
 
 var server = http.createServer(app);
