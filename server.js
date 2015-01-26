@@ -27,8 +27,8 @@ var express = require('express');
 var app = express();
 var fs = require('fs');
 
-//var compress = require('compression')
-//app.use(compress());
+var compress = require('compression')
+app.use(compress());
 
 var components = {};
 componentsFiles = fs.readdirSync("./components")
