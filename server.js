@@ -83,6 +83,12 @@ if (watchfile) {
   app.get(/^\/(watchfile).+/, watchfile(projectsroot, dreemroot));
 }
 
+var smokerun = components['smokerun'];
+if (smokerun) {
+  app.get(/^\/smokerun.*/, smokerun.get(projectsroot, dreemroot));
+  app.post(/^\/smokerun.*/, smokerun.post(projectsroot, dreemroot));
+}
+
 var server = http.createServer(app);
 
 var streem = components['streem'];
