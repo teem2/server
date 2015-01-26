@@ -52,6 +52,9 @@ Set the environment variables before running the server.
 ### Running demos
 Once your server is running, the directory specified by DREEM_ROOT is served from the root URL, e.g. [http://localhost:8080/examples/timeline.html](). If you specified a project root, you should be able to run your examples from [http://localhost:8080/projects/](). Note that the server will not list the contents of directories, so you'll need to point to a specific html file, e.g. http://localhost:8080/examples/timeline.html
 
+### Running all smoke tests from one URL
+You can run [http://localhost:8080/smokerun]() to in a browser to run all smoketests one after the other without manual intervention, all errors are reported on the server commandline and not just the browser console.
+
 ### Troubleshooting
 On OSX, if you see issues running 'npm install' that say something like 'Failed at the pty.js@0.2.3 install script' try running this on the command line:
 
