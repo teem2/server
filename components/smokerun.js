@@ -27,26 +27,29 @@ var html =
   }\n\
 \n\
   // lets run all src for 2 seconds each\n\
+  window.iframe_obj = document.createElement("iframe")\n\
+  window.iframe_obj.style.width = "100%"\n\
+  window.iframe_obj.style.height = "100%"\n\
+  document.body.appendChild(iframe_obj)\n\
   var ct = 0\n\
   function next(){\n\
   	if(ct >= src.length) return logmsg("COMPLETED")\n\
     var file = src[ct]\n\
     logmsg("TESTING "+file+"("+ct+"/"+src.length+")")\n\
-    iframe_obj.src = file\n\
+    console.log(iframe_obj)\n\
+    iframe_obj.src = "/"+file\n\
     iframe_obj.onload = function(){\n\
       iframe_obj.contentWindow.error = \n\
       iframe_obj.contentWindow.redirectLog = function(data){\n\
        logmsg("ERROR "+file+" - "+data)\n\
       }\n\
       iframe_obj.contentWindow.eval("console.error = redirectLog")\n\
-      setTimeout(next, 2000)\n\
+      setTimeout(next, 3000)\n\
     }\n\
     ct++\n\
   }\n\
   next()\n\
   </handler>\n\
-  <iframe id="iframe_obj" width="100%" height="100%">\n\
-  </iframe>\n\
 </view>\n\
 </body>\n\
 </html>\n'
