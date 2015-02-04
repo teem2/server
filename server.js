@@ -89,6 +89,11 @@ if (smokerun) {
   app.post(/^\/smokerun.*/, smokerun.post(projectsroot, dreemroot));
 }
 
+var saucerun = components['saucerun'];
+if (saucerun) {
+  app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
+}
+
 var server = http.createServer(app);
 
 var streem = components['streem'];
