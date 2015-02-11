@@ -52,20 +52,9 @@ app.use(express.static(dreemroot));
 
 var apiProxy = components['apiproxy'];
 if (apiProxy) {
-  app.use(apiProxy(new RegExp('^\/api\/')));
+  app.use(apiProxy.proxy(new RegExp('^\/api\/')));
+  app.use('/img/', apiProxy.imgProxy());
 }
-
-var proxy = require('express-http-proxy');
-app.use('/img/', proxy('cps-static.rovicorp.com', {
-  filter: function(req, res) {
-     return req.method == 'GET';
-  },
-  forwardPath: function(req, res) {
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.setHeader('Expires', 'Mon, 25 Jun 2015 21:31:12 GMT');
-    return require('url').parse(req.url).path;
-  }
-}));
 
 if (process.env.DREEM_PROJECTS_ROOT) {
   var projectsroot = __dirname + '/' + process.env.DREEM_PROJECTS_ROOT
