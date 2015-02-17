@@ -31,13 +31,25 @@ var compress = require('compression')
 app.use(compress());
 
 var components = {};
-componentsFiles = fs.readdirSync("./components")
-for (var i=0, l=componentsFiles.length; i<l; i++) {
-  var fileName = componentsFiles[i];
-  var component = require('./components/' + fileName);
-  components[fileName.replace('.js', '')] = component;
-  console.log('Loading Component: ', fileName.replace('.js', ''));
+
+function readComponentsFromDir(path) {
+  if (!fs.existsSync(path)) {
+    return;
+  }
+  
+  var componentsFiles = fs.readdirSync(path)
+  for (var i=0, l=componentsFiles.length; i<l; i++) {
+    var fileName = componentsFiles[i];
+    var component = require(path + '/' + fileName);
+    components[fileName.replace('.js', '')] = component;
+    console.log('Loading Component: ', fileName.replace('.js', ''));
+  }
 }
+
+readComponentsFromDir("./components");
+
+//read apiproxy and other private components
+readComponentsFromDir("../components");
 
 app.use(function (req, res, next) {
   if (req.url.match(/^\/(css|js|img|font|api)\/.+/)) {
