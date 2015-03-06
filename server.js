@@ -1,7 +1,7 @@
 /*
  The MIT License (MIT)
 
- Copyright ( c ) 2014 Teem2 LLC
+ Copyright ( c ) 2014-2015 Teem2 LLC
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
  SOFTWARE.
 */
 var http = require('http');
+var path = require('path');
 http.globalAgent.maxSockets = 25;
 var express = require('express');
 var app = express();
@@ -51,56 +52,49 @@ readComponentsFromDir("./components");
 //read apiproxy and other private components
 readComponentsFromDir("../components");
 
-app.use(function (req, res, next) {
+var server,
+  dreemroot = path.normalize(__dirname + '/' + process.env.DREEM_ROOT),
+  projectsroot,
+  assembler = components['assembler'],
+  apiProxy = components['apiproxy'],
+  validator = components['validator'],
+  watchfile = components['watchfile'],
+  smokerun = components['smokerun'],
+  saucerun = components['saucerun'],
+  streem = components['streem'];
+
+console.log('serving Dreem from', dreemroot);
+if (process.env.DREEM_PROJECTS_ROOT) {
+  projectsroot = path.normalize(__dirname + '/' + process.env.DREEM_PROJECTS_ROOT);
+  console.log('serving project root from', projectsroot);
+}
+
+// Start:Routing
+app.use(function(req, res, next) {
   if (req.url.match(/^\/(css|js|img|font|api)\/.+/)) {
     res.setHeader('Cache-Control', 'public, max-age=3600');
   }
   next();
 });
-
-var dreemroot = __dirname + '/' + process.env.DREEM_ROOT
-console.log('serving Dreem from', dreemroot);
+var srcSubdir = 'core/';
+if (assembler) app.all('/' + srcSubdir + '*', assembler(projectsroot, dreemroot, srcSubdir));
 app.use(express.static(dreemroot));
-
-var apiProxy = components['apiproxy'];
 if (apiProxy) {
   app.use(apiProxy.proxy(new RegExp('^\/api\/')));
   app.use('/img/', apiProxy.imgProxy());
 }
-
-if (process.env.DREEM_PROJECTS_ROOT) {
-  var projectsroot = __dirname + '/' + process.env.DREEM_PROJECTS_ROOT
-  console.log('serving project root from', projectsroot);
-  app.use('/projects', express.static(projectsroot));
-}
-
-var validator = components['validator'];
-if (validator) {
-  app.get(/^\/(validate).+/, validator(projectsroot, dreemroot));
-}
-
-var watchfile = components['watchfile'];
-if (watchfile) {
-  app.get(/^\/(watchfile).+/, watchfile(projectsroot, dreemroot));
-}
-
-var smokerun = components['smokerun'];
+if (projectsroot) app.use('/projects', express.static(projectsroot));
+if (validator) app.get(/^\/(validate).+/, validator(projectsroot, dreemroot));
+if (watchfile) app.get(/^\/(watchfile).+/, watchfile(projectsroot, dreemroot));
 if (smokerun) {
   app.get(/^\/smokerun.*/, smokerun.get(projectsroot, dreemroot));
   app.post(/^\/smokerun.*/, smokerun.post(projectsroot, dreemroot));
 }
+if (saucerun) app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
+// End:Routing
 
-var saucerun = components['saucerun'];
-if (saucerun) {
-  app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
-}
-
-var server = http.createServer(app);
-
-var streem = components['streem'];
-if (streem) {
-  streem.startServer(server);
-}
+server = http.createServer(app);
+if (streem) streem.startServer(server);
 
 //var vfs = require('vfs-local')({
 //   root: dreemroot,
@@ -108,7 +102,7 @@ if (streem) {
 //});
 //app.use(require('vfs-http-adapter')("/fs/", vfs));
 
-server.listen(process.env.PORT || 8080, process.env.IP || "0.0.0.0", function(){
+server.listen(process.env.PORT || 8080, process.env.IP || "0.0.0.0", function() {
   var addr = server.address();
   console.log("server listening at", addr.address + ":" + addr.port);
 });
