@@ -250,15 +250,19 @@ var processTokenTree = function(tokens, context) {
 };
 
 var doProcessDeclaration = function(processBody, processName, context) {
-  switch (processName) {
-    case 'coffee':
-      processBody = coffee.compile(processBody);
-      break;
-    case 'minify':
-      processBody = uglify.minify(processBody, {fromString:true}).code;
-      break;
-    default:
-      console.log('Unknown processor encountered: ' + processName);
+  try {
+    switch (processName) {
+      case 'coffee':
+        processBody = coffee.compile(processBody);
+        break;
+      case 'minify':
+        processBody = uglify.minify(processBody, {fromString:true}).code;
+        break;
+      default:
+        console.log('Unknown processor encountered: ' + processName);
+    }
+  } catch (e) {
+    processBody = 'Process Error: ' + processName + " : " + e;
   }
   return processBody;
 };
