@@ -348,9 +348,17 @@ module.exports = function (projectsRoot, dreemRoot, srcSubDir) {
   // Setup file watching. Will also call clearCache for us at least 
   // once per root path.
   for (var i = 0, len = rootPaths.length; len > i; i++) {
-    var path = rootPaths[i] + srcSubDir;
-    console.log('The assembler started watching: ' + path + ' for changes.');
-    watch.watchTree(path, function(f, curr, prev) {clearCache();});
+    (function(rootPath) {
+      var filePath = rootPath + srcSubDir;
+      fs.exists(filePath, function (exists) {
+        if (exists) {
+          console.log('The assembler started watching: ' + filePath + ' for changes.');
+          watch.watchTree(filePath, function(f, curr, prev) {clearCache();});
+        } else {
+          console.log('Tried to watch file: ' + filePath + ' for changes but could not find it.');
+        }
+      });
+    })(rootPaths[i]);
   }
   
   return function(req, res, next) {
