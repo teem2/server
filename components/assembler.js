@@ -51,12 +51,13 @@ var readFile = function(filePath, callback, context) {
   var readRecursivelyOverRoots = function(err, data) {
     if (err) {
       if (len > i) {
+        // SECURITY: Make sure we don't read outside a rootPath.
         var rootPath = rootPaths[i++],
           normalizedPath = path.normalize(rootPath + filePath);
         if (normalizedPath.indexOf(rootPath + srcSubDir) === 0) {
           fs.readFile(normalizedPath, {encoding: 'utf-8'}, readRecursivelyOverRoots);
         } else {
-          callback(false, "SECURITY CHECK: Path resolved outside supported dir:" + normalizedPath);
+          callback(false, "Path resolved outside supported dir:" + normalizedPath);
         }
       } else {
         callback(false, "No file found for path:" + filePath);
@@ -154,6 +155,7 @@ var processFile = function(filePath, tokenTreeNode, fileStack, context) {
             try {
               token.value = JSON.parse(token.value);
               token.action = token.value.shift();
+              token.file = filePath;
               
               // Process files recursively for includes
               if (token.action === 'include') {
@@ -240,12 +242,72 @@ var processTokenTree = function(tokens, context) {
           context.outStack[0].push(processBody)
           break;
         
+        case 'action':
+          doActionDeclaration(token.value.shift(), token, context);
+          break;
+        
         default:
           console.log('Unknown Declaration: ', token.action, token.value);
       }
     } else if (token.type === 'error') {
       console.log(token.value);
     }
+  }
+};
+
+var doActionDeclaration = function(actionName, token, context) {
+  var params = token.value;
+  
+  switch (actionName) {
+    case 'writefile':
+      var data = context.outStack[0].join(''),
+        rootPaths = context.rootPaths,
+        filePath = token.file,
+        idx = filePath.lastIndexOf('/'),
+        filePath = path.normalize(rootPaths[0] + (idx > 0 ? filePath.substring(0, idx + 1) : filePath) + params[0]);
+      
+      idx = filePath.lastIndexOf('/');
+      var dirPath = filePath.substring(0, idx);
+      
+      // SECURITY: Make sure we don't write outside a rootPath.
+      var i = rootPaths.length, isOk = false;
+      while (i) {
+        if (filePath.indexOf(rootPaths[--i] + context.srcSubDir) === 0) {
+          isOk = true;
+        }
+      }
+      if (!isOk) {
+        console.log("Can't write file to disk. Unsafe path: " + filePath);
+        break;
+      }
+      
+      var writeFileFunc = function() {
+          fs.writeFile(filePath, data, function(err) {
+            if (err) {
+              console.log('Error writing file to disk:', filePath, err);
+            } else {
+              console.log('Wrote to disk: ' + data.length + ' characters into file ', filePath);
+            }
+          });
+      };
+      
+      fs.exists(dirPath, function (exists) {
+        if (exists) {
+          writeFileFunc();
+        } else {
+          fs.mkdir(dirPath, function(err) {
+            if (err) {
+              console.log('Error writing file to disk. Could not mkdir:', dirPath, err);
+            } else {
+              writeFileFunc();
+            }
+          });
+        }
+      });
+      
+      break;
+    default:
+      console.log('Unknown Action: ', actionName);
   }
 };
 
