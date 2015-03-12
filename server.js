@@ -76,8 +76,7 @@ app.use(function(req, res, next) {
   }
   next();
 });
-var srcSubdir = 'core' + path.sep;
-if (assembler) app.all(path.sep + srcSubdir + '*', assembler(projectsroot, dreemroot, srcSubdir));
+if (assembler) app.all('/core/*', assembler(projectsroot, dreemroot, 'core' + path.sep));
 app.use(express.static(dreemroot));
 if (apiProxy) {
   app.use(apiProxy.proxy(new RegExp('^\/api\/')));
