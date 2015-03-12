@@ -163,7 +163,7 @@ var processFile = function(filePath, tokenTreeNode, fileStack, context) {
               // Process files recursively for includes
               if (token.action === 'include') {
                 var relativePath = token.path = token.value.shift(),
-                  idx = filePath.lastIndexOf('/');
+                  idx = filePath.lastIndexOf(path.sep);
                 processFile(
                   (idx > 0 ? filePath.substring(0, idx + 1) : filePath) + relativePath, // Combine current path with relative path.
                   token,
@@ -265,10 +265,10 @@ var doActionDeclaration = function(actionName, token, context) {
     case 'writefile':
       var data = context.outStack[0].join(''),
         filePath = token.file,
-        idx = filePath.lastIndexOf('/'),
+        idx = filePath.lastIndexOf(path.sep),
         filePath = path.normalize(rootForWriting + (idx > 0 ? filePath.substring(0, idx + 1) : filePath) + params[0]);
       
-      idx = filePath.lastIndexOf('/');
+      idx = filePath.lastIndexOf(path.sep);
       var dirPath = filePath.substring(0, idx);
       
       // SECURITY: Make sure we don't write outside a rootPath.

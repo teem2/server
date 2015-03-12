@@ -33,27 +33,27 @@ app.use(compress());
 
 var components = {};
 
-function readComponentsFromDir(path) {
-  if (!fs.existsSync(path)) {
+function readComponentsFromDir(filePath) {
+  if (!fs.existsSync(filePath)) {
     return;
   }
   
-  var componentsFiles = fs.readdirSync(path)
-  for (var i=0, l=componentsFiles.length; i<l; i++) {
+  var componentsFiles = fs.readdirSync(filePath)
+  for (var i = 0, len = componentsFiles.length; i < len; i++) {
     var fileName = componentsFiles[i];
-    var component = require(path + '/' + fileName);
+    var component = require(filePath + path.sep + fileName);
     components[fileName.replace('.js', '')] = component;
     console.log('Loading Component: ', fileName.replace('.js', ''));
   }
 }
 
-readComponentsFromDir("./components");
+readComponentsFromDir("." + path.sep + "components");
 
 //read apiproxy and other private components
-readComponentsFromDir("../components");
+readComponentsFromDir(".." + path.sep + "components");
 
 var server,
-  dreemroot = path.normalize(__dirname + '/' + process.env.DREEM_ROOT),
+  dreemroot = path.normalize(__dirname + path.sep + process.env.DREEM_ROOT),
   projectsroot,
   assembler = components['assembler'],
   apiProxy = components['apiproxy'],
@@ -65,7 +65,7 @@ var server,
 
 console.log('serving Dreem from', dreemroot);
 if (process.env.DREEM_PROJECTS_ROOT) {
-  projectsroot = path.normalize(__dirname + '/' + process.env.DREEM_PROJECTS_ROOT);
+  projectsroot = path.normalize(__dirname + path.sep + process.env.DREEM_PROJECTS_ROOT);
   console.log('serving project root from', projectsroot);
 }
 
@@ -76,14 +76,14 @@ app.use(function(req, res, next) {
   }
   next();
 });
-var srcSubdir = 'core/';
-if (assembler) app.all('/' + srcSubdir + '*', assembler(projectsroot, dreemroot, srcSubdir));
+var srcSubdir = 'core' + path.sep;
+if (assembler) app.all(path.sep + srcSubdir + '*', assembler(projectsroot, dreemroot, srcSubdir));
 app.use(express.static(dreemroot));
 if (apiProxy) {
   app.use(apiProxy.proxy(new RegExp('^\/api\/')));
-  app.use('/img/', apiProxy.imgProxy());
+  app.use(path.sep + 'img' + path.sep, apiProxy.imgProxy());
 }
-if (projectsroot) app.use('/projects', express.static(projectsroot));
+if (projectsroot) app.use(path.sep + 'projects', express.static(projectsroot));
 if (validator) app.get(/^\/(validate).+/, validator(projectsroot, dreemroot));
 if (watchfile) app.get(/^\/(watchfile).+/, watchfile(projectsroot, dreemroot));
 if (smokerun) {
