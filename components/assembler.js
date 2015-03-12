@@ -44,6 +44,9 @@ var clearCache = function() {
   cache = {};
 }
 
+// Determines where the "action" writefile will write to. Set during startup.
+var rootForWriting;
+
 var readFile = function(filePath, callback, context) {
   var rootPaths = context.rootPaths,
     srcSubDir = context.srcSubDir,
@@ -261,22 +264,15 @@ var doActionDeclaration = function(actionName, token, context) {
   switch (actionName) {
     case 'writefile':
       var data = context.outStack[0].join(''),
-        rootPaths = context.rootPaths,
         filePath = token.file,
         idx = filePath.lastIndexOf('/'),
-        filePath = path.normalize(rootPaths[0] + (idx > 0 ? filePath.substring(0, idx + 1) : filePath) + params[0]);
+        filePath = path.normalize(rootForWriting + (idx > 0 ? filePath.substring(0, idx + 1) : filePath) + params[0]);
       
       idx = filePath.lastIndexOf('/');
       var dirPath = filePath.substring(0, idx);
       
       // SECURITY: Make sure we don't write outside a rootPath.
-      var i = rootPaths.length, isOk = false;
-      while (i) {
-        if (filePath.indexOf(rootPaths[--i] + context.srcSubDir) === 0) {
-          isOk = true;
-        }
-      }
-      if (!isOk) {
+      if (filePath.indexOf(rootForWriting + context.srcSubDir) !== 0) {
         console.log("Can't write file to disk. Unsafe path: " + filePath);
         break;
       }
@@ -353,6 +349,7 @@ module.exports = function (projectsRoot, dreemRoot, srcSubDir) {
       fs.exists(filePath, function (exists) {
         if (exists) {
           console.log('The assembler started watching: ' + filePath + ' for changes.');
+          rootForWriting = rootPath;
           watch.watchTree(filePath, function(f, curr, prev) {clearCache();});
         } else {
           console.log('Tried to watch file: ' + filePath + ' for changes but could not find it.');
