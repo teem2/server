@@ -46,9 +46,10 @@ module.exports.startServer = function(httpServer) {
     // console.log('device connected', getDeviceID(spark.request))
     updateDevices();
   
-    if (state) {
-      primus.write(state);
-    }
+//    this will store socket values between refreshes. Disabled for now, but really should be configurable
+//    if (state) {
+//      primus.write(state);
+//    }
   
     // always join the default room
     spark.join(defaultroom);
