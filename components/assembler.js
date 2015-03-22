@@ -38,6 +38,8 @@ var PROCESSORS_BY_EXTENSION = {
   coffee:["coffee"]
 };
 
+var DIST_PATH_FRAG = path.sep + 'core' + path.sep + 'dist' + path.sep;
+
 var cache;
 var clearCache = function() {
   //console.log('CLEAR CACHE');
@@ -246,7 +248,7 @@ var processTokenTree = function(tokens, context) {
           break;
         
         case 'action':
-          doActionDeclaration(token.value.shift(), token, context);
+          if (conditionalState[0].conditionIsTrue) doActionDeclaration(token.value.shift(), token, context);
           break;
         
         default:
@@ -350,7 +352,13 @@ module.exports = function (projectsRoot, dreemRoot, srcSubDir) {
         if (exists) {
           console.log('The assembler started watching: ' + filePath + ' for changes.');
           rootForWriting = rootPath;
-          watch.watchTree(filePath, function(f, curr, prev) {clearCache();});
+          watch.watchTree(filePath, function(f, curr, prev) {
+            // Ignore changes to the dist dir since that happens when files
+            // are written to disk.
+            if (typeof f === 'string' && f.indexOf(DIST_PATH_FRAG) !== -1) return;
+            
+            clearCache();
+          });
         } else {
           console.log('Tried to watch file: ' + filePath + ' for changes but could not find it.');
         }
