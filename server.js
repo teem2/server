@@ -61,7 +61,8 @@ var server,
   watchfile = components['watchfile'],
   smokerun = components['smokerun'],
   saucerun = components['saucerun'],
-  streem = components['streem'];
+  streem = components['streem'],
+  version = components['version'];
 
 console.log('serving Dreem from', dreemroot);
 if (process.env.DREEM_PROJECTS_ROOT) {
@@ -90,6 +91,7 @@ if (smokerun) {
   app.post(/^\/smokerun.*/, smokerun.post(projectsroot, dreemroot));
 }
 if (saucerun) app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
+if (version) app.get(/^\/(version)/, version());
 // End:Routing
 
 server = http.createServer(app);
