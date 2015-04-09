@@ -41,22 +41,39 @@ function readComponentsFromDir(filePath) {
   var componentsFiles = fs.readdirSync(filePath)
   for (var i = 0, len = componentsFiles.length; i < len; i++) {
     var fileName = componentsFiles[i];
+      console.log("reading ", fileName);
     var component = require(filePath + "/" + fileName);
     components[fileName.replace('.js', '')] = component;
     console.log('Loading Component: ', fileName.replace('.js', ''));
   }
 }
 
+// Like readComponentsFromDir, but expects only top-level directories to
+// exist under the specified path
+function readSubComponentsFromDir(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+  
+  var componentsFiles = fs.readdirSync(filePath)
+  for (var i = 0, len = componentsFiles.length; i < len; i++) {
+    var fileName = componentsFiles[i];
+    console.log('Loading SubComponent: ', filePath + "/" + fileName + "/components");
+    readComponentsFromDir(filePath + "/" + fileName + "/components");
+  }
+}
+
 readComponentsFromDir("./components");
 
 //read apiproxy and other private components
-readComponentsFromDir("../components");
+readSubComponentsFromDir("../components");
 
 var server,
   dreemroot = path.normalize(__dirname + "/" + process.env.DREEM_ROOT),
   projectsroot,
   assembler = components['assembler'],
   apiProxy = components['apiproxy'],
+  soundcloudProxy = components['soundcloudproxy'],
   validator = components['validator'],
   watchfile = components['watchfile'],
   smokerun = components['smokerun'],
@@ -81,6 +98,9 @@ app.use(express.static(dreemroot));
 if (apiProxy) {
   app.use(apiProxy.proxy(new RegExp('^\/api\/')));
   app.use('/img/', apiProxy.imgProxy());
+}
+if (soundcloudProxy) {
+  app.use(soundcloudProxy.proxy(new RegExp('^\/soundcloudapi\/')));
 }
 if (projectsroot) app.use('/projects', express.static(projectsroot));
 if (validator) app.get(/^\/(validate).+/, validator(projectsroot, dreemroot));
