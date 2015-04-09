@@ -32,31 +32,21 @@ var compress = require('compression')
 app.use(compress());
 
 var components = {};
+var privateComponents = [];
 
-function readComponentsFromDir(filePath) {
-  if (!fs.existsSync(filePath)) {
-    return;
-  }
-  
-  var componentsFiles = fs.readdirSync(filePath)
-  for (var i = 0, len = componentsFiles.length; i < len; i++) {
-    var fileName = componentsFiles[i];
-    var component = require(filePath + "/" + fileName);
-    components[fileName.replace('.js', '')] = component;
-    console.log('Loading Component: ', fileName.replace('.js', ''));
-  }
+var componentsFiles = fs.readdirSync("./components")
+for (var i = 0, len = componentsFiles.length; i < len; i++) {
+  var fileName = componentsFiles[i];
+  var component = require("./components/" + fileName);
+  components[fileName.replace('.js', '')] = component;
+  console.log('Loading Component: ', fileName.replace('.js', ''));
 }
-
-readComponentsFromDir("./components");
-
-//read apiproxy and other private components
-readComponentsFromDir("../components");
 
 var server,
   dreemroot = path.normalize(__dirname + "/" + process.env.DREEM_ROOT),
   projectsroot,
   assembler = components['assembler'],
-  apiProxy = components['apiproxy'],
+//  apiProxy = components['apiproxy'],
   validator = components['validator'],
   watchfile = components['watchfile'],
   smokerun = components['smokerun'],
@@ -70,6 +60,35 @@ if (process.env.DREEM_PROJECTS_ROOT) {
   console.log('serving project root from', projectsroot);
 }
 
+if (process.env.DREEM_COMPONENTS_ROOT) {
+  componentsroot = path.normalize(__dirname + "/" + process.env.DREEM_COMPONENTS_ROOT);
+
+  if (!fs.existsSync(componentsroot)) {
+    console.warn('DREEM_COMPONENTS_ROOT dir not found, no components loaded.');
+    return;
+  }
+  console.log('Loading private components from', componentsroot);
+  
+  var componentDirs = fs.readdirSync(componentsroot)
+  for (var i = 0, len = componentDirs.length; i < len; i++) {
+    var dirName = componentDirs[i];
+    var componentPath = componentsroot + '/' + dirName + '/index.js'
+    
+    if (fs.existsSync(componentPath)) {
+      console.log('Loading Component: ', dirName);
+      
+      var component = require(componentPath);
+      if (component.initialize) {
+        privateComponents.push(component);
+      } else {
+        console.warn('No initializer found for component', dirName);
+      }
+    } else {
+      console.warn('No index.js found for component', dirName);
+    }
+  }
+}
+
 // Start:Routing
 app.use(function(req, res, next) {
   if (req.url.match(/^\/(css|js|img|font|api)\/.+/)) {
@@ -79,10 +98,7 @@ app.use(function(req, res, next) {
 });
 if (assembler) app.all('/core/*', assembler(projectsroot, dreemroot, 'core' + path.sep));
 app.use(express.static(dreemroot));
-if (apiProxy) {
-  app.use(apiProxy.proxy(new RegExp('^\/api\/')));
-  app.use('/img/', apiProxy.imgProxy());
-}
+
 if (projectsroot) app.use('/projects', express.static(projectsroot));
 if (validator) app.get(/^\/(validate).+/, validator(projectsroot, dreemroot));
 if (watchfile) app.get(/^\/(watchfile).+/, watchfile(projectsroot, dreemroot));
@@ -93,6 +109,11 @@ if (smokerun) {
 if (saucerun) app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
 if (version) app.get(/^\/(version)/, version());
 // End:Routing
+
+for (var i=0; i<privateComponents.length; i++) {
+  var comp = privateComponents[i];
+  comp.initialize(app);
+}
 
 server = http.createServer(app);
 if (streem) streem.startServer(server);
