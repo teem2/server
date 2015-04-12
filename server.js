@@ -62,7 +62,8 @@ var server,
   smokerun = components['smokerun'],
   saucerun = components['saucerun'],
   streem = components['streem'],
-  version = components['version'];
+  info = components['info'],
+  wrapper = components['wrapper'];
 
 console.log('serving Dreem from', dreemroot);
 if (process.env.DREEM_PROJECTS_ROOT) {
@@ -77,6 +78,7 @@ app.use(function(req, res, next) {
   }
   next();
 });
+if (wrapper) app.get(/\.dre$/, wrapper(projectsroot, dreemroot));
 if (assembler) app.all('/core/*', assembler(projectsroot, dreemroot, 'core' + path.sep));
 app.use(express.static(dreemroot));
 if (apiProxy) {
@@ -91,7 +93,7 @@ if (smokerun) {
   app.post(/^\/smokerun.*/, smokerun.post(projectsroot, dreemroot));
 }
 if (saucerun) app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
-if (version) app.get(/^\/(version)/, version());
+if (info) app.get(/^\/(version|info)/, info());
 // End:Routing
 
 server = http.createServer(app);
