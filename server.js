@@ -32,7 +32,7 @@ var compress = require('compression')
 app.use(compress());
 
 var components = {};
-var privateComponents = [];
+var privateComponents = {};
 
 var componentsFiles = fs.readdirSync("./components")
 for (var i = 0, len = componentsFiles.length; i < len; i++) {
@@ -73,20 +73,30 @@ if (process.env.DREEM_COMPONENTS_ROOT) {
   var componentDirs = fs.readdirSync(componentsroot)
   for (var i = 0, len = componentDirs.length; i < len; i++) {
     var dirName = componentDirs[i];
-    var componentPath = componentsroot + '/' + dirName + '/index.js'
     
-    if (fs.existsSync(componentPath)) {
-      console.log('Loading Component: ', dirName);
-      
-      var component = require(componentPath);
-      if (component.initialize) {
-        privateComponents.push(component);
-      } else {
-        console.warn('No initializer found for component', dirName);
-      }
-    } else {
-      console.warn('No index.js found for component', dirName);
+    var componentDir = componentsroot + '/' + dirName;
+    var componentDescriptorPath = componentDir + '/package.json'
+    var componentMainPath = componentDir + '/index.js'
+    
+    if (!fs.existsSync(componentDescriptorPath)) {
+      console.warn('Could not load component from directory', dirName, 'because no package.json found.');
+      continue;
     }
+    
+    if (!fs.existsSync(componentMainPath)) {
+      console.warn('Could not load component from directory', dirName, 'because no index.js found.');
+      continue;
+    }
+      
+    var component = require(componentMainPath);
+    if (!component.initialize) {
+      console.warn('Could not load component from directory', dirName, 'because no initialize method found.');
+      continue;
+    }
+
+    var pjson = require(componentDescriptorPath);
+    console.log('Loading component', pjson.name);
+    privateComponents[pjson.name] = {"component":component, "component_dir":componentDir};
   }
 }
 
@@ -112,9 +122,33 @@ if (saucerun) app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
 if (info) app.get(/^\/(version|info)/, info());
 // End:Routing
 
-for (var i=0; i<privateComponents.length; i++) {
-  var comp = privateComponents[i];
-  comp.initialize(app);
+for (var compName in privateComponents) {
+  var comp = privateComponents[compName];
+  var expressComp = comp['component'];
+  
+//  init the server component
+  expressComp.initialize(app);
+
+//  Now find all of the .dre files and serve them under the /classes/ path
+  var glob = require("glob");
+  var dres = glob.sync(comp['component_dir'] + '/dre/' + "**/*.dre");
+
+  for (var i=0; i<dres.length; i++) {
+    var dreemFilePath = dres[i];
+    
+    var ext = '.dre';
+    if (dreemFilePath.indexOf(ext, dreemFilePath.length - ext.length) == -1) continue; //skip non-dre files
+    
+    var dreemFileName = dreemFilePath.substring(dreemFilePath.lastIndexOf('/')+1, dreemFilePath.length);
+
+    var nameParts = compName.split('-');
+    if (nameParts[nameParts.length-1] == dreemFileName.replace('.dre', '')) {
+      nameParts.pop();
+    }
+    nameParts.push(dreemFileName);
+    
+    app.use('/classes/' + nameParts.join('/'), express.static(dreemFilePath))
+  }
 }
 
 server = http.createServer(app);
