@@ -107,6 +107,36 @@ app.use(function(req, res, next) {
   }
   next();
 });
+
+for (var compName in privateComponents) {
+  var comp = privateComponents[compName];
+  var expressComp = comp['component'];
+
+//  init the server component
+  expressComp.initialize(app);
+
+//  Now find all of the .dre files and serve them under the /classes/ path
+  var glob = require("glob");
+  var dres = glob.sync(comp['component_dir'] + '/dre/' + "**/*.dre");
+
+  for (var i=0; i<dres.length; i++) {
+    var dreemFilePath = dres[i];
+
+    var ext = '.dre';
+    if (dreemFilePath.indexOf(ext, dreemFilePath.length - ext.length) == -1) continue; //skip non-dre files
+
+    var dreemFileName = dreemFilePath.substring(dreemFilePath.lastIndexOf('/')+1, dreemFilePath.length);
+
+    var nameParts = compName.split('-');
+    if (nameParts[nameParts.length-1] == dreemFileName.replace('.dre', '')) {
+      nameParts.pop();
+    }
+    nameParts.push(dreemFileName);
+
+    app.use('/classes/' + nameParts.join('/'), express.static(dreemFilePath))
+  }
+}
+
 if (wrapper) app.get(/\.dre$/, wrapper(projectsroot, dreemroot));
 if (assembler) app.all('/core/*', assembler(projectsroot, dreemroot, 'core' + path.sep));
 app.use(express.static(dreemroot));
@@ -121,35 +151,6 @@ if (smokerun) {
 if (saucerun) app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
 if (info) app.get(/^\/(version|info)/, info());
 // End:Routing
-
-for (var compName in privateComponents) {
-  var comp = privateComponents[compName];
-  var expressComp = comp['component'];
-  
-//  init the server component
-  expressComp.initialize(app);
-
-//  Now find all of the .dre files and serve them under the /classes/ path
-  var glob = require("glob");
-  var dres = glob.sync(comp['component_dir'] + '/dre/' + "**/*.dre");
-
-  for (var i=0; i<dres.length; i++) {
-    var dreemFilePath = dres[i];
-    
-    var ext = '.dre';
-    if (dreemFilePath.indexOf(ext, dreemFilePath.length - ext.length) == -1) continue; //skip non-dre files
-    
-    var dreemFileName = dreemFilePath.substring(dreemFilePath.lastIndexOf('/')+1, dreemFilePath.length);
-
-    var nameParts = compName.split('-');
-    if (nameParts[nameParts.length-1] == dreemFileName.replace('.dre', '')) {
-      nameParts.pop();
-    }
-    nameParts.push(dreemFileName);
-    
-    app.use('/classes/' + nameParts.join('/'), express.static(dreemFilePath))
-  }
-}
 
 server = http.createServer(app);
 if (streem) streem.startServer(server);
