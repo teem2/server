@@ -42,8 +42,12 @@ for (var i = 0, len = componentsFiles.length; i < len; i++) {
   console.log('Loading Component: ', fileName.replace('.js', ''));
 }
 
+var rootdir = (process.env.DREEM_ROOT || '../dreem') + '/';
+var projdir = (process.env.DREEM_PROJECTS_ROOT || '../projects') + '/';
+var compdir =  (process.env.DREEM_COMPONENTS_ROOT || '../components') + '/';
+
 var server,
-  dreemroot = path.normalize(__dirname + "/" + process.env.DREEM_ROOT),
+  dreemroot = path.normalize(__dirname + "/" + rootdir),
   projectsroot,
   assembler = components['assembler'],
 //  apiProxy = components['apiproxy'],
@@ -56,13 +60,13 @@ var server,
   wrapper = components['wrapper'];
 
 console.log('serving Dreem from', dreemroot);
-if (process.env.DREEM_PROJECTS_ROOT) {
-  projectsroot = path.normalize(__dirname + "/" + process.env.DREEM_PROJECTS_ROOT);
+if (projdir && fs.existsSync(projdir)) {
+  projectsroot = path.normalize(__dirname + "/" + projdir);
   console.log('serving project root from', projectsroot);
 }
 
-if (process.env.DREEM_COMPONENTS_ROOT) {
-  componentsroot = path.normalize(__dirname + "/" + process.env.DREEM_COMPONENTS_ROOT);
+if (compdir && fs.existsSync(compdir)) {
+  componentsroot = path.normalize(__dirname + "/" + compdir);
 
   if (!fs.existsSync(componentsroot)) {
     console.warn('DREEM_COMPONENTS_ROOT dir not found, no components loaded.');
