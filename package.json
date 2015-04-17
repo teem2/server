@@ -1,25 +1,25 @@
 {
   "name": "teemserver",
   "version": "1.0.1",
-  "description": "Serves static content, proxies API calls",
+  "description": "Serves static content and proxies API calls",
   "main": "server.js",
   "dependencies": {
-    "async": "^0.8.0",
+    "express-cache-control": "^1.0.2",
     "compression": "^1.2.2",
     "express": "^4.10.5",
-    "express-http-proxy": "^0.2.2",
-    "express-cache-control": "^1.0.2",
+    "async": "^0.8.0",
     "hbs": "^2.7.0",
-    "http-proxy": "^1.7.3",
     "limiter": "^1.0.5",
-    "primus.io": "^3.1.2",
-    "querystring": "^0.2.0",
-    "rovi": "^0.0.1",
+    "express-http-proxy": "^0.2.2",
+    "http-proxy": "^1.7.3",
     "sockjs": "^0.3.11",
+    "rovi": "^0.0.1",
+    "querystring": "^0.2.0",
+    "primus.io": "^3.1.2",
     "tmp": "^0.0.25",
-    "ua-parser-js": "^0.7.3",
+    "watch": "^0.14.0",
     "uglify-js": "^2.4.17",
-    "watch": "^0.14.0"
+    "ua-parser-js": "^0.7.3"
   },
   "devDependencies": {
     "coffee-script": "^1.8.0"
