@@ -65,6 +65,7 @@ if (projdir && fs.existsSync(projdir)) {
   console.log('serving project root from', projectsroot);
 }
 
+//find private components at the configured componentsroot and make sure they have the correct structure
 if (compdir && fs.existsSync(compdir)) {
   componentsroot = path.normalize(__dirname + "/" + compdir);
 
@@ -91,15 +92,15 @@ if (compdir && fs.existsSync(compdir)) {
       console.warn('Could not load component from directory', dirName, 'because no index.js found.');
       continue;
     }
-      
+
+    var pjson = require(componentDescriptorPath);
+    console.log('Loading component', pjson.name);
+    
     var component = require(componentMainPath);
     if (!component.initialize) {
       console.warn('Could not load component from directory', dirName, 'because no initialize method found.');
       continue;
     }
-
-    var pjson = require(componentDescriptorPath);
-    console.log('Loading component', pjson.name);
     privateComponents[pjson.name] = {"component":component, "component_dir":componentDir};
   }
 }
@@ -112,33 +113,52 @@ app.use(function(req, res, next) {
   next();
 });
 
+// Find all of the dres, libs, and examples in the private components and serve them up
+//  Now find all of the .dre files and serve them under the /classes/ path
 for (var compName in privateComponents) {
   var comp = privateComponents[compName];
-  var expressComp = comp['component'];
-
-//  init the server component
-  expressComp.initialize(app);
-
-//  Now find all of the .dre files and serve them under the /classes/ path
+  
   var glob = require("glob");
   var dres = glob.sync(comp['component_dir'] + '/dre/' + "**/*.dre");
+  var examples = glob.sync(comp['component_dir'] + '/examples/' + "**/*.*");
+  var drelibs = glob.sync(comp['component_dir'] + '/dre/lib' + "**/*.js");
 
-  for (var i=0; i<dres.length; i++) {
-    var dreemFilePath = dres[i];
+  var nameParts = compName.split('-');
+  var simpleName = nameParts.pop();
+  var namePath = nameParts.join('/');
 
-    var ext = '.dre';
-    if (dreemFilePath.indexOf(ext, dreemFilePath.length - ext.length) == -1) continue; //skip non-dre files
+  function servePrivateComponentResources(paths, registerPath) {
+    for (var i=0; i<paths.length; i++) {
+      var dreemFilePath = paths[i];
+      var dreemFileName = dreemFilePath.substring(dreemFilePath.lastIndexOf('/')+1, dreemFilePath.length);
 
-    var dreemFileName = dreemFilePath.substring(dreemFilePath.lastIndexOf('/')+1, dreemFilePath.length);
+      var myNamePath = '' + namePath;
+      if (simpleName != dreemFileName.substring(0, dreemFileName.lastIndexOf('.'))) {
+        myNamePath += '/' + simpleName;
+      }
 
-    var nameParts = compName.split('-');
-    if (nameParts[nameParts.length-1] == dreemFileName.replace('.dre', '')) {
-      nameParts.pop();
+      registerPath(myNamePath + '/' + dreemFileName, dreemFilePath);
     }
-    nameParts.push(dreemFileName);
+  };
 
-    app.use('/classes/' + nameParts.join('/'), express.static(dreemFilePath))
-  }
+  servePrivateComponentResources(drelibs, function(namePath, dreemFilePath) {
+    console.log('serving lib', '/lib/' + namePath);
+    app.use('/lib/' + namePath, express.static(dreemFilePath));
+  });
+
+  servePrivateComponentResources(examples, function(namePath, dreemFilePath) {
+    var ext = '.dre';
+    if (dreemFilePath.indexOf(ext, dreemFilePath.length - ext.length) == -1) {
+      app.use('/examples/' + namePath, express.static(dreemFilePath))
+    } else {
+//      use the wrapper to server .dre examples
+      if (wrapper) app.get('/examples/' + namePath, wrapper(projectsroot, dreemroot, dreemFilePath));
+    }
+  });
+
+  servePrivateComponentResources(dres, function(namePath, dreemFilePath) {
+    app.use('/classes/' + namePath, express.static(dreemFilePath))
+  });
 }
 
 if (wrapper) app.get(/\.dre$/, wrapper(projectsroot, dreemroot));
@@ -154,6 +174,15 @@ if (smokerun) {
 }
 if (saucerun) app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
 if (info) app.get(/^\/(version|info)/, info());
+
+//initialize private components
+for (var compName in privateComponents) {
+  var comp = privateComponents[compName];
+  var expressComp = comp['component'];
+
+//  init the server component
+  expressComp.initialize(app);
+}
 // End:Routing
 
 server = http.createServer(app);

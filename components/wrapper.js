@@ -3,13 +3,15 @@ var projectsPath = '/projects/';
 var classesPath = '/classes/';
 var docsPath = '/docs/api/#!/api/dr.';
 
-module.exports = function (projectsRoot, dreemRoot) {
+module.exports = function (projectsRoot, dreemRoot, absPath) {
     return function(req, res) {
         var path = req.path;
         var isXHR = req.xhr;
 
         if (!isXHR && path.indexOf(classesPath) === 0) {
             return res.redirect(docsPath + path.substring(classesPath.length, path.length - '.dre'.length));
+        } else if (absPath) {
+          path = absPath;
         } else if (path.indexOf(projectsPath) === 0) {
             path = projectsRoot + path.substring(projectsPath.length);
         } else {
