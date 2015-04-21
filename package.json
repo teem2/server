@@ -1,6 +1,6 @@
 {
   "name": "teemserver",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Serves static content and proxies API calls",
   "main": "server.js",
   "dependencies": {
@@ -40,5 +40,8 @@
   "bugs": {
     "url": "https://github.com/teem2/server/issues"
   },
-  "homepage": "https://github.com/teem2/server"
+  "homepage": "https://github.com/teem2/server",
+  "devDependencies": {
+    "coffee-script": "^1.8.0"
+  }
 }

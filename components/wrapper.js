@@ -27,13 +27,13 @@ module.exports = function (projectsRoot, dreemRoot, absPath) {
                 res.writeHead(200, { 'Content-Type': 'text/html' });
 
                 fs.readFile(path, 'utf8', function(readerr, filedata) {
-                    if (readerr) { return console.err(readerr); }
+                    if (readerr) { return console.log(readerr); }
 
                     if (isXHR) {
                         res.end(filedata);
                     } else {
                         fs.readFile('wrapper.html', 'utf8', function (wrapreaderr, template) {
-                            if (wrapreaderr) { return console.err(wrapreaderr); }
+                            if (wrapreaderr) { return console.log(wrapreaderr); }
                             res.end(template.replace('~[CONTENT]~', filedata));
                         });
                     }
