@@ -28,26 +28,37 @@ var express = require('express');
 var app = express();
 var fs = require('fs');
 
-var compress = require('compression')
+var compress = require('compression');
 app.use(compress());
 
 var components = {};
 var privateComponents = {};
 
-var componentsFiles = fs.readdirSync("./components")
+var serverDir = path.dirname(fs.realpathSync(__filename));
+
+var rootdir = (process.env.DREEM_ROOT || (serverDir + '/../dreem')) + '/';
+var projdir = (process.env.DREEM_PROJECTS_ROOT || (serverDir + '/../projects')) + '/';
+var compdir =  (process.env.DREEM_COMPONENTS_ROOT || (serverDir + '/../components')) + '/';
+
+if (serverDir.match(/node_modules/)) {
+  console.log("Server is running as an npm node_module.");
+
+  rootdir = (process.env.DREEM_ROOT || (serverDir + '/../..')) + '/';
+  projdir = (process.env.DREEM_PROJECTS_ROOT || (serverDir + '/../../../projects')) + '/';
+  compdir =  (process.env.DREEM_COMPONENTS_ROOT || (serverDir + '/../../../components')) + '/';
+
+}
+
+var componentsFiles = fs.readdirSync(serverDir + "/components");
 for (var i = 0, len = componentsFiles.length; i < len; i++) {
   var fileName = componentsFiles[i];
-  var component = require("./components/" + fileName);
+  var component = require(serverDir + "/components/" + fileName);
   components[fileName.replace('.js', '')] = component;
   console.log('Loading Component: ', fileName.replace('.js', ''));
 }
 
-var rootdir = (process.env.DREEM_ROOT || '../dreem') + '/';
-var projdir = (process.env.DREEM_PROJECTS_ROOT || '../projects') + '/';
-var compdir =  (process.env.DREEM_COMPONENTS_ROOT || '../components') + '/';
-
 var server,
-  dreemroot = path.normalize(__dirname + "/" + rootdir),
+  dreemroot = path.normalize(rootdir),
   projectsroot,
   assembler = components['assembler'],
 //  apiProxy = components['apiproxy'],
@@ -59,15 +70,15 @@ var server,
   info = components['info'],
   wrapper = components['wrapper'];
 
-console.log('serving Dreem from', dreemroot);
+console.log('Serving Dreem from', dreemroot);
 if (projdir && fs.existsSync(projdir)) {
-  projectsroot = path.normalize(__dirname + "/" + projdir);
+  projectsroot = path.normalize(projdir);
   console.log('serving project root from', projectsroot);
 }
 
 //find private components at the configured componentsroot and make sure they have the correct structure
 if (compdir && fs.existsSync(compdir)) {
-  componentsroot = path.normalize(__dirname + "/" + compdir);
+  componentsroot = path.normalize(compdir);
 
   if (!fs.existsSync(componentsroot)) {
     console.warn('DREEM_COMPONENTS_ROOT dir not found, no components loaded.');
