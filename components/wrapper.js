@@ -32,6 +32,7 @@ module.exports = function (projectsRoot, dreemRoot, absPath) {
                     if (isXHR) {
                         res.end(filedata);
                     } else {
+                        //
                         //fs.readFile('wrapper.html', 'utf8', function (wrapreaderr, template) {
                         //    if (wrapreaderr) { return console.log(wrapreaderr); }
                         //    res.end(template.replace('~[CONTENT]~', filedata));

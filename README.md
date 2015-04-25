@@ -14,21 +14,25 @@ For best results, create a projects directory in the same location as your serve
 
 ### Starting the server
 
-DREEM_ROOT specifies the root to your local [Dreem](https://github.com/teem2/dreem) installation:
+`DREEM_ROOT` specifies the root to your local [Dreem](https://github.com/teem2/dreem) installation:
 
     DREEM_ROOT=../dreem/ node server.js
 
-The optional DEBUG flag shows event bus information in the shell:
+The optional `DEBUG` flag shows event bus information in the shell:
 
-    DEBUG=true DREEM_ROOT=../dreem/ node server.js
+    DEBUG=true DREEM_ROOT=../dreem/ ./bin/teemserver
 
-The optional DREEM_PROJECTS_ROOT flag will mount a projects directory at the root, e.g. [http://localhost:8080/projects/]()':
+The optional `DREEM_PROJECTS_ROOT` flag will mount a projects directory at the root, e.g. [http://localhost:8080/projects/]()':
 
-    DREEM_PROJECTS_ROOT=../projects/ DREEM_ROOT=../dreem/ node server.js
+    DREEM_PROJECTS_ROOT=../projects/ DREEM_ROOT=../dreem/ ./bin/teemserver
+    
+If you have external components to load, place them all in a top-level directory and use the `DREEM_COMPONENTS_ROOT` variable to indicate where to find them:
 
+    DREEM_COMPONENTS_ROOT="../workspace/components" ./bin/teemserver
+    
 Optional API keys that enable access to [Rovi APIs](http://prod-doc.rovicorp.com/mashery/index.php/Main_Page) 
 
-    ROVI_SEARCH_SECRET=XXX ROVI_SEARCH_KEY=XXX DREEM_ROOT=../dreem/ node server.js
+    ROVI_SEARCH_SECRET=XXX ROVI_SEARCH_KEY=XXX DREEM_ROOT=../dreem/ ./bin/teemserver
 
 To use Rovi APIs, prepend /api/ to the URL, e.g. 
 
