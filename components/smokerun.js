@@ -9,7 +9,7 @@ var html =
   <script>\n\
     var assert = chai.assert\n\
   </script>\n\
-  <script type="text/javascript" src="/core/dreem.js"></script>\n\
+  <script type="text/javascript" src="/core/layout.js"></script>\n\
 </head>\n\
 <body>\n\
 <view id="all" width="100%" height="100%" clip="true">\n\

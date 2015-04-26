@@ -1,6 +1,6 @@
 {
   "name": "teemserver",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Serves static content and proxies API calls",
   "main": "server.js",
   "dependencies": {
@@ -20,7 +20,8 @@
     "watch": "^0.14.0",
     "uglify-js": "^2.4.17",
     "coffee-script": "~1.9.2",
-    "ua-parser-js": "^0.7.3"
+    "ua-parser-js": "^0.7.3",
+    "glob": "5.0.5"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
