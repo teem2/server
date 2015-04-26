@@ -14,6 +14,8 @@ For best results, create a projects directory in the same location as your serve
 
 ### Starting the server
 
+The Teem Server can be started either with `node server.js` or using the `./bin/teemserver` script, both of which accept environment variables for configuration, as follows:
+
 `DREEM_ROOT` specifies the root to your local [Dreem](https://github.com/teem2/dreem) installation:
 
     DREEM_ROOT=../dreem/ node server.js
