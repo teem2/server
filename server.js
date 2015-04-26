@@ -36,16 +36,16 @@ var privateComponents = {};
 
 var serverDir = path.dirname(fs.realpathSync(__filename));
 
-var rootdir = (process.env.DREEM_ROOT || (serverDir + '/../dreem')) + '/';
-var projdir = (process.env.DREEM_PROJECTS_ROOT || (serverDir + '/../projects')) + '/';
-var compdir =  (process.env.DREEM_COMPONENTS_ROOT || (serverDir + '/../components')) + '/';
+var rootdir = path.resolve((process.env.DREEM_ROOT || (serverDir + '/../dreem'))) + '/';
+var projdir = path.resolve((process.env.DREEM_PROJECTS_ROOT || (serverDir + '/../projects'))) + '/';
+var compdir = path.resolve((process.env.DREEM_COMPONENTS_ROOT || (serverDir + '/../components'))) + '/';
 
 if (serverDir.match(/node_modules/)) {
   console.log("Server is running as an npm node_module.");
 
-  rootdir = (process.env.DREEM_ROOT || (serverDir + '/../..')) + '/';
-  projdir = (process.env.DREEM_PROJECTS_ROOT || (serverDir + '/../../../projects')) + '/';
-  compdir =  (process.env.DREEM_COMPONENTS_ROOT || (serverDir + '/../../../components')) + '/';
+  rootdir = path.resolve((process.env.DREEM_ROOT || (serverDir + '/../..'))) + '/';
+  projdir = path.resolve((process.env.DREEM_PROJECTS_ROOT || (serverDir + '/../../../projects'))) + '/';
+  compdir = path.resolve((process.env.DREEM_COMPONENTS_ROOT || (serverDir + '/../../../components'))) + '/';
 
 }
 
