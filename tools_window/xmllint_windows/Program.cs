@@ -110,11 +110,27 @@ namespace xmllint_windows
                 String filepath = args[0];
                 //String filepath = "f:/clients/teem/git/teem2/dreem/classes/slider.dre";
 
+                // Do nothing if the file does not exist. This can be caused if the file is served from DREEM_COMPONENTS_ROOT.
+                if (!File.Exists(filepath))
+                  return;
+
                 // Read the file into an array of strings. We need to modify the input source to prevent parsing errors caused by code fragments
-                string[] lines = System.IO.File.ReadAllLines(filepath);
+                // Read files that are locked (see http://stackoverflow.com/questions/9759697/reading-a-file-used-by-another-process)
+                List<string> all_lines = new List<string>();
+                using (var fs = new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                  using (var sr = new StreamReader(fs, Encoding.Default))
+                  {
+                    string line;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                      all_lines.Add(line);
+                    }
+                  }
+                }
 
                 // Add cdata structures
-                lines = xform_xml(lines);
+                string[] lines = xform_xml(all_lines.ToArray());
 
                 string fragment = String.Join("\n", lines);
                 XmlReaderSettings settings = new XmlReaderSettings();

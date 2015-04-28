@@ -19,7 +19,7 @@ var findErrors = function (parsererror) {
 var validate;
 if (process.platform.indexOf('win32') >= 0) {
   validate = function (path, resultsCallback) {
-    exec("xmllint_windows " + path, function(error, stdout, stderr) {
+      exec("xmllint_windows " + path, function(error, stdout, stderr) {
       var array = stderr.toString().split("\n");
       var out = [];
       for (var i = 0; i < array.length; i ++) {
