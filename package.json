@@ -1,6 +1,6 @@
 {
   "name": "teemserver",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Serves static content and proxies API calls",
   "main": "server.js",
   "dependencies": {

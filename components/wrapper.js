@@ -18,7 +18,9 @@ module.exports = function (projectsRoot, dreemRoot, absPath) {
             path = dreemRoot + path;
         }
 
-        path = path.normalize();
+        while (path.match(/(\.\.|\/\/)/)) {
+            path = path.replace(/\/\//g, '/').replace(/\.\./g, '');
+        }
 
         fs.exists(path, function (exists) {
             if (exists) {
