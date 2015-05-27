@@ -73,7 +73,7 @@ var server,
 console.log('Serving Dreem from', dreemroot);
 if (projdir && fs.existsSync(projdir)) {
   projectsroot = path.normalize(projdir);
-  console.log('serving project root from', projectsroot);
+  console.log('Serving project root from', projectsroot);
 }
 
 //find private components at the configured componentsroot and make sure they have the correct structure
@@ -207,5 +207,5 @@ if (streem) streem.startServer(server);
 
 server.listen(process.env.PORT || 8080, process.env.IP || "0.0.0.0", function() {
   var addr = server.address();
-  console.log("server listening at", addr.address + ":" + addr.port);
+  console.log("Server listening at", addr.address + ":" + addr.port);
 });
