@@ -314,6 +314,9 @@ var doProcessDeclaration = function(processBody, processName, context) {
     switch (processName) {
       case 'coffee':
         processBody = coffee.compile(processBody);
+          
+        //the coffeescript parser is leaving in empty '#' lines out of multiline comments (i.e starts with '###*') which breaks jsduck
+        processBody = processBody.replace(/^\s*#\s*$/gm, '');
         break;
       case 'minify':
         processBody = uglify.minify(processBody, {fromString:true}).code;
@@ -322,7 +325,7 @@ var doProcessDeclaration = function(processBody, processName, context) {
         console.log('Unknown processor encountered: ' + processName);
     }
   } catch (e) {
-    processBody = 'Process Error: ' + processName + " : " + e;
+    processBody = 'Process Error: ' + processName + ' : ' + e;
   }
   return processBody;
 };
@@ -368,7 +371,7 @@ module.exports = function (projectsRoot, dreemRoot, srcSubDir) {
   
   return function(req, res, next) {
     // Clear cache if so indicated
-    var query = query = req.query;
+    var query = req.query;
     if (query.cache === 'clear') clearCache();
     
     var filePath = req.path,
@@ -403,4 +406,4 @@ module.exports = function (projectsRoot, dreemRoot, srcSubDir) {
       processFile(filePath, tokenTree, [], context);
     }
   }
-}
+};
