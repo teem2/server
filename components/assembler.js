@@ -314,7 +314,7 @@ var doProcessDeclaration = function(processBody, processName, context) {
     switch (processName) {
       case 'coffee':
         processBody = coffee.compile(processBody);
-          
+
         //the coffeescript parser is leaving in empty '#' lines out of multiline comments (i.e starts with '###*') which breaks jsduck
         processBody = processBody.replace(/^\s*#\s*$/gm, '');
         break;
@@ -348,6 +348,8 @@ module.exports = function (projectsRoot, dreemRoot, srcSubDir) {
   
   // Setup file watching. Will also call clearCache for us at least 
   // once per root path.
+  var triedPaths = [];
+
   for (var i = 0, len = rootPaths.length; len > i; i++) {
     (function(rootPath) {
       var filePath = rootPath + srcSubDir;
@@ -359,16 +361,23 @@ module.exports = function (projectsRoot, dreemRoot, srcSubDir) {
             // Ignore changes to the dist dir since that happens when files
             // are written to disk.
             if (typeof f === 'string' && f.indexOf(DIST_PATH_FRAG) !== -1) return;
-            
+
             clearCache();
           });
         } else {
-          console.log('Tried to watch file: ' + filePath + ' for changes but could not find it.');
+          triedPaths.push(filePath);
+          if (triedPaths.length == rootPaths.length) {
+            console.log('*** WARNING: could not find any root paths to watch! ***');
+            for (var j = 0, jlen = triedPaths.length; jlen > j; j++) {
+              console.log('   !!! Not found: ' + triedPaths[j]);
+            }
+          }
         }
       });
     })(rootPaths[i]);
   }
-  
+
+
   return function(req, res, next) {
     // Clear cache if so indicated
     var query = req.query;
