@@ -1,3 +1,5 @@
+var fs = require('fs');
+
 var html =
 '<html>\n\
 <head>\n\
@@ -52,8 +54,8 @@ var html =
   </handler>\n\
 </view>\n\
 </body>\n\
-</html>\n'
-var fs = require('fs')
+</html>\n';
+
 module.exports = {
 	get:function (projectsroot, dreemroot) {
 		return function(req, res, next) {
@@ -86,4 +88,4 @@ module.exports = {
 			//next()
 		}
 	}
-}
+};

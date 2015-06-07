@@ -12,6 +12,16 @@ If your machine doesn't have 'xmllint' available on the command-line, you'll nee
 
 For best results, create a projects directory in the same location as your server and dreem directories. The projects directory is intended to give you a place to work that is independent of dreem.
 
+### Running the tests
+
+Be sure mocha is installed on your environment:
+
+    npm install -g mocha
+    
+Then in the root directory, run the tests with:    
+
+    mocha
+
 ### Starting the server
 
 The Teem Server can be started either with `node server.js` or using the `./bin/teemserver` script, both of which accept environment variables for configuration, as follows:

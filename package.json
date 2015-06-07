@@ -43,6 +43,7 @@
   },
   "homepage": "https://github.com/teem2/server",
   "devDependencies": {
-    "coffee-script": "^1.8.0"
+    "coffee-script": "^1.8.0",
+    "mocha": "^2.2.5"
   }
 }
