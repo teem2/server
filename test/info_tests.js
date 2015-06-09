@@ -11,17 +11,17 @@ describe('Info', function(){
         it('should handle return info request data', function(){
             var statusCode = 'unset', headers = 'unset', response = 'unset';
             var res = {
-                writeHead : function(sc, h) {
+                writeHead: function(sc, h) {
                     statusCode = sc;
                     headers = h;
                 },
-                end : function(resp) {
+                end: function(resp) {
                     response = JSON.parse(resp);
                     response.currentTime = 'SET'
                 }
             };
             var handler = info();
-            handler(null, res);
+            handler({}, res);
 
             assert.equal(200, statusCode);
             assert.deepEqual({"Content-Type": "application/json"}, headers);

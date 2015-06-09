@@ -44,7 +44,7 @@ var cache;
 var clearCache = function() {
   //console.log('CLEAR CACHE');
   cache = {};
-}
+};
 
 // Determines where the "action" writefile will write to. Set during startup.
 var rootForWriting;

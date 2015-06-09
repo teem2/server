@@ -12,14 +12,14 @@ describe('Saucerun', function(){
     var handler = saucerun(path.resolve("./test/testprojects/") + "/", path.resolve("./test/") + "/");
 
     describe('#saucerun()', function() {
-        it("returns a saucerunner with DYNAMIC_FILES set proeprly", function(done) {
+        it("returns a saucerunner with DYNAMIC_FILES set properly", function(done) {
             handler(null, {
-                writeHead : function(sc, h) {
-                    assert.equal(200, sc);
+                writeHead: function(sc) {
+                  assert.equal(200, sc);
                 },
-                end : function(resp) {
-                    assert.equal('<html>DYNAMIC_FILES = [\"http://localhost:8080/smoke/a.html?test\",\"http://localhost:8080/smoke/b.html?test\"]</html>', resp);
-                    done();
+                end: function(resp) {
+                  assert.equal('<html>DYNAMIC_FILES = [\"http://localhost:8080/smoke/a.html?test\",\"http://localhost:8080/smoke/b.html?test\"]</html>', resp);
+                  done();
                 }
             });
         });

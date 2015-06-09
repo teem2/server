@@ -1,6 +1,6 @@
-var assert = require("assert")
+var assert = require("assert");
 
-var streem = require("../components/streem.js")
+var streem = require("../components/streem.js");
 describe('Streem', function(){
     describe('#require', function(){
         it('should return an exported teemserver streem component', function(){
