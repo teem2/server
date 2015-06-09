@@ -1,4 +1,5 @@
 var assert = require("assert");
+var path = require('path');
 
 var watchfile = require("../components/watchfile.js");
 describe('Watchfile', function(){
