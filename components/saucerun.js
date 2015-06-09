@@ -1,12 +1,12 @@
 var fs = require('fs')
 
 module.exports = function (projectsroot, dreemroot) {
-  return function(req, res, next) {
+  return function(req, res) {
 
     var filename = dreemroot + '/saucerunner.html';
     var html = fs.readFileSync(filename, "utf8");
 
-    var files = fs.readdirSync(dreemroot+'/smoke');
+    var files = fs.readdirSync(dreemroot +'/smoke');
     var str = '';
     for (var i=0, l=files.length; i<l; i++) {
       var fileName = files[i];
