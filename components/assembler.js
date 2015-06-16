@@ -377,8 +377,7 @@ module.exports = function (projectsRoot, dreemRoot, srcSubDir) {
     })(rootPaths[i]);
   }
 
-
-  return function(req, res, next) {
+  return function(req, res) {
     // Clear cache if so indicated
     var query = req.query;
     if (query.cache === 'clear') clearCache();
