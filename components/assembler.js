@@ -44,7 +44,7 @@ var cache;
 var clearCache = function() {
   //console.log('CLEAR CACHE');
   cache = {};
-}
+};
 
 // Determines where the "action" writefile will write to. Set during startup.
 var rootForWriting;
@@ -377,8 +377,7 @@ module.exports = function (projectsRoot, dreemRoot, srcSubDir) {
     })(rootPaths[i]);
   }
 
-
-  return function(req, res, next) {
+  return function(req, res) {
     // Clear cache if so indicated
     var query = req.query;
     if (query.cache === 'clear') clearCache();

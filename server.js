@@ -52,16 +52,15 @@ if (serverDir.match(/node_modules/)) {
 var componentsFiles = fs.readdirSync(serverDir + "/components");
 for (var i = 0, len = componentsFiles.length; i < len; i++) {
   var fileName = componentsFiles[i];
-  var component = require(serverDir + "/components/" + fileName);
-  components[fileName.replace('.js', '')] = component;
+  components[fileName.replace('.js', '')] = require(serverDir + "/components/" + fileName);
   console.log('Loading Component: ', fileName.replace('.js', ''));
 }
 
 var server,
   dreemroot = path.normalize(rootdir),
   projectsroot,
+  componentsroot,
   assembler = components['assembler'],
-//  apiProxy = components['apiproxy'],
   validator = components['validator'],
   watchfile = components['watchfile'],
   smokerun = components['smokerun'],
@@ -86,13 +85,13 @@ if (compdir && fs.existsSync(compdir)) {
   }
   console.log('Loading private components from', componentsroot);
   
-  var componentDirs = fs.readdirSync(componentsroot)
+  var componentDirs = fs.readdirSync(componentsroot);
   for (var i = 0, len = componentDirs.length; i < len; i++) {
     var dirName = componentDirs[i];
     
     var componentDir = componentsroot + '/' + dirName;
-    var componentDescriptorPath = componentDir + '/package.json'
-    var componentMainPath = componentDir + '/index.js'
+    var componentDescriptorPath = componentDir + '/package.json';
+    var componentMainPath = componentDir + '/index.js';
     
     if (!fs.existsSync(componentDescriptorPath)) {
       console.warn('Could not load component from directory', dirName, 'because no package.json found.');
@@ -150,7 +149,7 @@ for (var compName in privateComponents) {
 
       registerPath(myNamePath + '/' + dreemFileName, dreemFilePath);
     }
-  };
+  }
 
   servePrivateComponentResources(drelibs, function(namePath, dreemFilePath) {
     console.log('serving lib', '/lib/' + namePath);
@@ -183,13 +182,12 @@ if (smokerun) {
   app.get(/^\/smokerun.*/, smokerun.get(projectsroot, dreemroot));
   app.post(/^\/smokerun.*/, smokerun.post(projectsroot, dreemroot));
 }
-if (saucerun) app.get(/^\/saucerun.*/, saucerun.get(projectsroot, dreemroot));
+if (saucerun) app.get(/^\/saucerun.*/, saucerun(projectsroot, dreemroot));
 if (info) app.get(/^\/(version|info)/, info());
 
 //initialize private components
 for (var compName in privateComponents) {
-  var comp = privateComponents[compName];
-  var expressComp = comp['component'];
+  var expressComp = privateComponents[compName]['component'];
 
 //  init the server component
   expressComp.initialize(app);
@@ -197,7 +195,7 @@ for (var compName in privateComponents) {
 // End:Routing
 
 server = http.createServer(app);
-if (streem) streem.startServer(server);
+if (streem) streem(server);
 
 //var vfs = require('vfs-local')({
 //   root: dreemroot,
@@ -209,3 +207,18 @@ server.listen(process.env.PORT || 8080, process.env.IP || "0.0.0.0", function() 
   var addr = server.address();
   console.log("Server listening at", addr.address + ":" + addr.port);
 });
+
+module.exports.server = server;
+module.exports.dreemroot = dreemroot;
+module.exports.projectsroot = projectsroot;
+module.exports.componentsroot = componentsroot;
+module.exports.components = {
+  assembler: assembler,
+  validator: validator,
+  watchfile: watchfile,
+  smokerun: smokerun,
+  saucerun: saucerun,
+  streem: streem,
+  info: info,
+  wrapper: wrapper
+};

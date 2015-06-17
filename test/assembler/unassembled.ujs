@@ -1,0 +1,1 @@
+~["include","test.coffee"]~~["if","runtime","test"]~~["action","writefile","./test/out.js"]~~["else"]~~["action","writefile","./test/wrong.js"]~~["endif"]~

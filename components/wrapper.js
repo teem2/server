@@ -13,9 +13,9 @@ module.exports = function (projectsRoot, dreemRoot, absPath) {
         } else if (absPath) {
           path = absPath;
         } else if (path.indexOf(projectsPath) === 0) {
-            path = projectsRoot + path.substring(projectsPath.length);
+          path = projectsRoot + path.substring(projectsPath.length);
         } else {
-            path = dreemRoot + path;
+          path = dreemRoot + path;
         }
 
         while (path.match(/(\.\.|\/\/)/)) {

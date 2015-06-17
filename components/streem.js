@@ -3,8 +3,7 @@
 var Primus = require('primus.io');
 var UAParser = require('ua-parser-js');
 
-module.exports = {};
-module.exports.startServer = function(httpServer) {
+module.exports = function(httpServer) {
   
   var state;
   var defaultroom = 'broadcast';
@@ -15,7 +14,7 @@ module.exports.startServer = function(httpServer) {
   var getDeviceID = function(req) {
     // console.log('getDeviceID', recentip + '~' + req.headers['user-agent'])
     return recentip + '~' + req.headers['user-agent']
-  }
+  };
   
   var updateDevices = function () {
     var devicelist = [];
@@ -25,11 +24,11 @@ module.exports.startServer = function(httpServer) {
       devicelist.push(devices[key]);
     }
     primus.write({type: 'devices', data: devicelist});
-  }
+  };
   
   // grab the remote IP before it disappears in the bowels of primus - key for unregistering
   // devices when they disconnect
-  var recentip = null
+  var recentip = null;
   primus.before('name', function (req, res) {
     recentip = req.headers['x-forwarded-for'] ||
       req.connection.remoteAddress ||
@@ -41,8 +40,8 @@ module.exports.startServer = function(httpServer) {
     var obj = uaparser.setUA(spark.headers['user-agent']).getResult();
     // console.log(JSON.stringify(devices))
     obj.ip = recentip;
-    obj.id = spark.id
-    devices[getDeviceID(spark.request)] = obj
+    obj.id = spark.id;
+    devices[getDeviceID(spark.request)] = obj;
     // console.log('device connected', getDeviceID(spark.request))
     updateDevices();
   
@@ -55,7 +54,7 @@ module.exports.startServer = function(httpServer) {
     spark.join(defaultroom);
   
     spark.on('data', function (data) {
-      state = data
+      state = data;
       if (process.env.DEBUG) {
         console.log('data', JSON.stringify(data));
       }
@@ -64,11 +63,12 @@ module.exports.startServer = function(httpServer) {
         spark.room(defaultroom).except(spark.id).write(data);
       });
     });
-  })
+  });
   
   primus.on('disconnection', function (spark) {
-    delete devices[getDeviceID(spark.request)]
+    delete devices[getDeviceID(spark.request)];
     // console.log('device disconnected', getDeviceID(spark.request))
     updateDevices();
   });
-}
+
+};

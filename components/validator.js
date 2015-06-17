@@ -48,7 +48,7 @@ if (process.platform.indexOf('win32') >= 0) {
 }
 
 module.exports = function (projectsroot, dreemroot) {
-  return function(req, res, next) {
+  return function(req, res) {
     var path = req.query.url.substring(1);
     // handle project and root paths
     if (path.indexOf('projects/') === 0){
@@ -73,7 +73,6 @@ module.exports = function (projectsroot, dreemroot) {
               if (writeerr) return console.log(writeerr);
 
               validate(tmpath, function(results) {
-                // console.log(results);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(results));
                 cleanupCallback();

@@ -1,0 +1,45 @@
+<html>
+<head>
+  <title>Auto tester</title>
+  <script>var BOILERPLATE_OPTS = {type:'smoke'};</script>
+  <script type="text/javascript" src="/boilerplate.js"></script>
+</head>
+<body>
+<view id="all" width="100%" height="100%" clip="true">
+  <handler event="oninit">
+    var src = [
+      $ALLFILES$
+    ];
+
+    function logmsg(msg){
+      console.log(msg);
+      // lets post it to the server for viewing
+      var req = new XMLHttpRequest();
+      req.open('POST', '/smokerun', true);
+      req.send(msg)
+    }
+
+    // lets run all src for 2 seconds each
+    window.iframe_obj = document.createElement('iframe');
+    window.iframe_obj.style.width = '100%';
+    window.iframe_obj.style.height = '100%';
+    document.body.appendChild(iframe_obj);
+    var ct = 0;
+    function next() {
+      if (ct >= src.length) return logmsg('COMPLETED');
+      var file = src[ct];
+      logmsg('TESTING ' + file + '(' + ct + '/' + src.length + ')');
+      console.log(iframe_obj);
+      iframe_obj.src = '/' + file;
+      iframe_obj.onload = function() {
+        iframe_obj.contentWindow.error = iframe_obj.contentWindow.redirectLog = function(data) { logmsg('ERROR ' + file + ' - ' + data) };
+        iframe_obj.contentWindow.eval('console.error = redirectLog');
+        setTimeout(next, 3000)
+      };
+      ct++
+    }
+    next()
+  </handler>
+</view>
+</body>
+</html>
